@@ -52,7 +52,7 @@ setup(
 
     entry_points={
         'console_scripts': [
-            'timeflip-tt = timefliptt.main:main',
+            'timeflip-tt = timefliptt.app:main',
         ]
     },
 )
