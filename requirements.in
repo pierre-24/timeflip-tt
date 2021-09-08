@@ -1,0 +1,4 @@
+pytimefliplib @ git+https://github.com/pierre-24/pytimefliplib.git
+flake8
+flake8-quotes
+autopep8
