@@ -1,7 +1,7 @@
 import yaml
 import os
 
-from pytimefliplib.async_client import DEFAULT_PASSWORD
+from pytimefliplib.async_client import DEFAULT_PASSWORD, AsyncClient, TimeFlipRuntimeError
 from pytimefliplib.scripts import is_valid_addr
 
 
@@ -69,3 +69,21 @@ class TimeTrackerError(Exception):
 class TimeTracker:
     def __init__(self, settings: Settings):
         self.settings = settings
+
+        self.current_facet = 0
+        self.client = AsyncClient(self.settings['tf_address'])
+
+    def notify_facet(self, facet: int) -> None:
+        self.current_facet = facet
+
+    async def connect(self):
+        """Connect to the TimeFlip"""
+
+        try:
+            await self.client.connect()
+            await self.client.setup(password=self.settings['tf_password'], facet_callback=self.notify_facet)
+        except TimeFlipRuntimeError as e:
+            raise TimeTrackerError(e)
+
+    async def disconnect(self):
+        await self.client.disconnect()
