@@ -14,7 +14,7 @@ with open(path.join(here, 'requirements.in')) as f:
     requirements = f.readlines()
 
 setup(
-    name='timefliptt',
+    name='timeflip-tt',
     version=timefliptt.__version__,
 
     # Description

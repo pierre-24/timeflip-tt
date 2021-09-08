@@ -1,6 +1,6 @@
-# `timefliptt`
+# `timeflip-tt`
 
-A lightweight hand-made time tracker based on TimeFlip.
+A lightweight custom time tracker based on TimeFlip.
 
 ## Install and use
 

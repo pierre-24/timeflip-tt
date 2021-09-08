@@ -26,5 +26,7 @@ pyflakes==2.3.1
     # via flake8
 git+https://github.com/pierre-24/pytimefliplib.git
     # via -r requirements.in
+pyyaml==5.4.1
+    # via -r requirements.in
 toml==0.10.2
     # via autopep8

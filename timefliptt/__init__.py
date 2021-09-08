@@ -1,5 +1,5 @@
 """
-TimeTracker based on TimeFlip device
+A lightweight custom time tracker based on TimeFlip
 """
 
 __version__ = '0.1'

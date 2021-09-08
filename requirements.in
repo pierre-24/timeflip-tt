@@ -1,4 +1,5 @@
 pytimefliplib @ git+https://github.com/pierre-24/pytimefliplib.git
+pyyaml
 flake8
 flake8-quotes
 autopep8
