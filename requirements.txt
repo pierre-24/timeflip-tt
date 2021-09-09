@@ -20,7 +20,7 @@ flake8==3.9.2
     #   flake8-quotes
 flake8-quotes==3.3.0
     # via -r requirements.in
-flask[async]==2.0.1
+git+https://github.com/pallets/flask.git@6f852d
     # via -r requirements.in
 itsdangerous==2.0.1
     # via flask

@@ -7,7 +7,7 @@ help:
 
 
 install:
-	pip-sync && pip3 install -e .
+	pip-sync && python setup.py develop
 
 lint:
 	flake8 timefliptt --max-line-length=120 --ignore=N802

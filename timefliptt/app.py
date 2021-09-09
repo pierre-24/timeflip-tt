@@ -4,10 +4,10 @@ import yaml
 from flask import Flask, make_response, Response
 from flask.views import MethodView
 
-from pytimefliplib.async_client import DEFAULT_PASSWORD, AsyncClient
+from pytimefliplib.async_client import DEFAULT_PASSWORD, AsyncClient, TimeFlipRuntimeError
 
 import timefliptt
-from timefliptt.timeflip import run_coroutine_on_timeflip
+from timefliptt.timeflip import run_coroutine_on_timeflip, CoroutineError
 
 
 class ConfigError(Exception):
@@ -79,8 +79,11 @@ class Index(MethodView):
         return client.current_facet_value
 
     async def get(self) -> Response:
-        facet = await run_coroutine_on_timeflip(self.get_facet)
-        return make_response('current facet is {}'.format(facet), 200)
+        try:
+            facet = await run_coroutine_on_timeflip(self.get_facet)
+            return make_response('current facet is {}'.format(facet), 200)
+        except (CoroutineError, TimeFlipRuntimeError) as e:
+            return make_response('Error while getting facet: {}'.format(e), 200)
 
 
 def create_app(args: argparse.Namespace) -> Flask:
