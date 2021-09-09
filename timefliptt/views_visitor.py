@@ -10,5 +10,3 @@ class Index(MethodView):
 
 
 blueprint.add_url_rule('/', view_func=Index.as_view('index'))
-
-
