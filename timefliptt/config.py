@@ -1,4 +1,5 @@
 import yaml
+import os
 
 from pytimefliplib.async_client import DEFAULT_PASSWORD
 
@@ -12,6 +13,10 @@ class ConfigError(Exception):
 class Config:
     """Custom app config
     """
+
+    # App config
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    DB_FILE = 'timeflip-tt.sqlite'
 
     # TimeFlip
     TIMEFLIP = {
@@ -75,3 +80,7 @@ class Config:
 
         if len(self.TIMEFLIP['password']) != 6:
             raise ConfigError('Password must be 6 character long!')
+
+    @property
+    def SQLALCHEMY_DATABASE_URI(self) -> str:
+        return 'sqlite:///{}'.format(os.path.join(os.path.abspath(self.DB_FILE)))

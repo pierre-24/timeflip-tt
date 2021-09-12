@@ -6,3 +6,4 @@ autopep8
 flask[async] @ git+https://github.com/pallets/flask.git@6f852d
 Flask-WTF
 bootstrap-flask
+Flask-SQLAlchemy

@@ -1,4 +1,4 @@
-from flask import Blueprint, Response, jsonify
+from flask import Blueprint, Response, jsonify, current_app
 from flask.views import MethodView
 from pytimefliplib.async_client import AsyncClient, TimeFlipRuntimeError
 
@@ -9,9 +9,11 @@ blueprint = Blueprint('api', __name__)
 
 class StatusView(MethodView):
     @staticmethod
-    async def get_info(client: AsyncClient) -> dict:
+    async def get_info(client: AsyncClient, config: dict) -> dict:
         return {
             'status': 'ok',
+            'address': config['address'],
+            'name': await client.device_name(),
             'facet': client.current_facet_value,
             'battery': await client.battery_level(),
             'paused': client.paused,
@@ -23,8 +25,9 @@ class StatusView(MethodView):
             return jsonify(**await run_coroutine_on_timeflip(self.get_info, full_setup=True))
         except (CoroutineError, TimeFlipRuntimeError) as e:
             return jsonify(**{
+                'address': current_app.config['TIMEFLIP']['address'],
                 'status': 'error',
-                'msg': e
+                'msg': str(e)
             })
 
 

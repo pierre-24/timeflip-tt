@@ -26,9 +26,14 @@ git+https://github.com/pallets/flask.git@6f852d
     # via
     #   -r requirements.in
     #   bootstrap-flask
+    #   flask-sqlalchemy
     #   flask-wtf
+flask-sqlalchemy==2.5.1
+    # via -r requirements.in
 flask-wtf==0.15.1
     # via -r requirements.in
+greenlet==1.1.1
+    # via sqlalchemy
 itsdangerous==2.0.1
     # via
     #   flask
@@ -51,6 +56,8 @@ git+https://github.com/pierre-24/pytimefliplib.git
     # via -r requirements.in
 pyyaml==5.4.1
     # via -r requirements.in
+sqlalchemy==1.4.23
+    # via flask-sqlalchemy
 toml==0.10.2
     # via autopep8
 werkzeug==2.0.1

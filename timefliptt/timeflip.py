@@ -11,7 +11,7 @@ class CoroutineError(Exception):
     pass
 
 
-async def run_coroutine_on_timeflip(coro: Callable[[AsyncClient], Coroutine], full_setup: bool = False) -> Any:
+async def run_coroutine_on_timeflip(coro: Callable[[AsyncClient, dict], Coroutine], full_setup: bool = False) -> Any:
     """Run a coroutine on a connected TimeFlip
 
     :param full_setup: use `client.setup()` (to access lock state and facet) instead of `client.login()`
@@ -25,7 +25,7 @@ async def run_coroutine_on_timeflip(coro: Callable[[AsyncClient], Coroutine], fu
                 await client.setup(password=config['password'])
             else:
                 await client.login(password=config['password'])
-            result = await coro(client)
+            result = await coro(client, config)
     except asyncio.exceptions.TimeoutError as e:
         raise CoroutineError(e)
     except BleakError as e:
