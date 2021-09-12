@@ -8,13 +8,18 @@ class ConfigError(Exception):
 
 
 class Config:
-    """Custom Flask config
+    """Custom app config
     """
 
     # TimeFlip
     TIMEFLIP = {
         'address': '',
         'password': DEFAULT_PASSWORD
+    }
+
+    # App info
+    APP_INFO = {
+        'app_name': 'TimeFlip TimeTracker'
     }
 
     def __init__(self):

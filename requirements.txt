@@ -10,6 +10,8 @@ autopep8==1.5.7
     # via -r requirements.in
 bleak==0.12.1
     # via pytimefliplib
+bootstrap-flask==1.8.0
+    # via -r requirements.in
 click==8.0.1
     # via flask
 dbus-next==0.2.3
@@ -21,13 +23,22 @@ flake8==3.9.2
 flake8-quotes==3.3.0
     # via -r requirements.in
 git+https://github.com/pallets/flask.git@6f852d
+    # via
+    #   -r requirements.in
+    #   bootstrap-flask
+    #   flask-wtf
+flask-wtf==0.15.1
     # via -r requirements.in
 itsdangerous==2.0.1
-    # via flask
+    # via
+    #   flask
+    #   flask-wtf
 jinja2==3.0.1
     # via flask
 markupsafe==2.0.1
-    # via jinja2
+    # via
+    #   jinja2
+    #   wtforms
 mccabe==0.6.1
     # via flake8
 pycodestyle==2.7.0
@@ -44,3 +55,5 @@ toml==0.10.2
     # via autopep8
 werkzeug==2.0.1
     # via flask
+wtforms==2.3.3
+    # via flask-wtf

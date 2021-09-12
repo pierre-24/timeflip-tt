@@ -1,6 +1,7 @@
 import argparse
 
 from flask import Flask
+from flask_bootstrap import Bootstrap
 
 import timefliptt
 from timefliptt.config import Config
@@ -14,11 +15,14 @@ def create_app(args: argparse.Namespace) -> Flask:
     config.from_file(args.settings)
     app.config.from_object(config)
 
+    # module
+    Bootstrap().init_app(app)
+
     # urls
-    from views_visitor import blueprint
+    from timefliptt.views.visitor import blueprint
     app.register_blueprint(blueprint)
 
-    from views_api import blueprint
+    from timefliptt.views.api import blueprint
     app.register_blueprint(blueprint)
 
     return app
