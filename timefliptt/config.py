@@ -2,6 +2,8 @@ import yaml
 
 from pytimefliplib.async_client import DEFAULT_PASSWORD
 
+import timefliptt
+
 
 class ConfigError(Exception):
     pass
@@ -19,7 +21,11 @@ class Config:
 
     # App info
     APP_INFO = {
-        'app_name': 'TimeFlip TimeTracker'
+        'app_name': 'TimeFlip TimeTracker',
+        'app_author': timefliptt.__author__,
+        'app_author_url': 'https://pierrebeaujean.net',
+        'app_version': timefliptt.__version__,
+        'app_repo_url': 'https://github.com/pierre-24/timeflip-tt/'
     }
 
     def __init__(self):

@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <title>{% block page_title %}{% endblock %} - {{ app_name }}</title>
+    <title>{% block page_title %}{% endblock %} &bullet; {{ app_name }}</title>
     <meta charset="UTF-8">
 
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0">
@@ -12,7 +12,47 @@
 </head>
 
 <body>
-Test!
+
+<nav class="navbar sticky-top navbar-dark navbar-expand-md bg-dark">
+    <a class="navbar-brand" href="/" title="{{ app_name }}"><img src="{{ url_for('static', filename='logo.svg') }}" alt="{{ app_name }}"></a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navitems" aria-controls="navitems" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navitems">
+        <ul class="navbar-nav">
+            <li class="nav-item {% if active_menu == 'graphs' %}active{% endif %}">
+            <a class="nav-link" href="{{ url_for('visitor.graphs') }}">Graphs</a>
+            </li>
+            <li class="nav-item {% if active_menu == 'tasks' %}active{% endif %}">
+            <a class="nav-link" href="{{ url_for('visitor.tasks') }}">Tasks</a>
+            </li>
+            <li class="nav-item {% if active_menu == 'history' %}active{% endif %}">
+            <a class="nav-link" href="{{ url_for('visitor.history') }}">History</a>
+            </li>
+            <li class="nav-item {% if active_menu == 'reports' %}active{% endif %}">
+            <a class="nav-link" href="{{ url_for('visitor.reports') }}">Reports</a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<div class="container">
+   <main role="main" id="content" class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="container">
+        {{ app_name }},
+        created by <a href="{{ app_author_url }}">{{ app_author }}</a>  (version: <a href="{{ app_repo_url }}">{{ app_version }}</a>)
+    </footer>
+</div>
+
 </body>
+
+
+{% block scripts %}
+    {{ bootstrap.load_js() }}
+{% endblock %}
 
 </html>

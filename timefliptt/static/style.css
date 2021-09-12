@@ -1,3 +1,11 @@
-body {
-    background: red;
+main {
+    margin: 32px 0;
 }
+
+footer  {
+    text-align: center;
+    color: #777;
+    font-size: 90%;
+    margin-top: 32px;
+}
+
