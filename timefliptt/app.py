@@ -10,15 +10,8 @@ from timefliptt.config import Config
 db = SQLAlchemy()
 
 
-def create_app(args: argparse.Namespace) -> Flask:
+def create_app(config: Config) -> Flask:
     app = Flask(__name__)
-
-    # config
-    config = Config()
-
-    if args.settings:
-        config.from_file(args.settings)
-
     app.config.from_object(config)
 
     # module
@@ -27,6 +20,9 @@ def create_app(args: argparse.Namespace) -> Flask:
 
     # urls
     from timefliptt.views.visitor import blueprint
+    app.register_blueprint(blueprint)
+
+    from timefliptt.views.user import blueprint
     app.register_blueprint(blueprint)
 
     from timefliptt.views.api import blueprint
@@ -63,7 +59,13 @@ def main():
     # get args
     args = get_arguments_parser().parse_args()
 
-    app = create_app(args)
+    # configure
+    config = Config()
+    if args.settings:
+        config.from_file(args.settings)
+
+    # create app
+    app = create_app(config)
 
     if not args.init:  # run webserver
         app.run()
