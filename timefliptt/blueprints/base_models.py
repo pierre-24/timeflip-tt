@@ -1,6 +1,7 @@
 import hashlib
-
 from typing import Union
+
+from flask_login import UserMixin
 
 from timefliptt.app import db
 
@@ -13,14 +14,14 @@ class BaseModel(db.Model):
     date_modified = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
 
 
-class User(BaseModel):
+class User(BaseModel, UserMixin):
     name = db.Column(db.VARCHAR(length=150), nullable=False)
     device_address = db.Column(db.VARCHAR(length=24), nullable=False)
     password_hash = db.Column(db.VARCHAR(length=64), nullable=False)
 
     @staticmethod
-    def hash_pass(password: str):
-        return hashlib.sha512(password)
+    def hash_pass(password: str) -> str:
+        return hashlib.sha512(password.encode()).hexdigest()
 
     @classmethod
     def create(cls, name: str, address: str, password: str) -> 'User':
@@ -31,7 +32,7 @@ class User(BaseModel):
 
         return o
 
-    def correct_pass(self, password: str) -> bool:
+    def is_correct_password(self, password: str) -> bool:
         return self.password_hash == self.hash_pass(password)
 
 

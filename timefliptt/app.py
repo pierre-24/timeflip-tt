@@ -3,11 +3,19 @@ import argparse
 from flask import Flask
 from flask_bootstrap import Bootstrap
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager
 
 import timefliptt
 from timefliptt.config import Config
 
 db = SQLAlchemy()
+login_manager = LoginManager()
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    from timefliptt.blueprints.base_models import User
+    return User.query.get(user_id)
 
 
 def create_app(config: Config) -> Flask:
@@ -17,15 +25,17 @@ def create_app(config: Config) -> Flask:
     # module
     Bootstrap().init_app(app)
     db.init_app(app)
+    login_manager.init_app(app)
+    login_manager.login_view = 'visitor.login'
 
     # urls
-    from timefliptt.views.visitor import blueprint
+    from timefliptt.blueprints.visitor.views import blueprint
     app.register_blueprint(blueprint)
 
-    from timefliptt.views.user import blueprint
+    from timefliptt.blueprints.user.views import blueprint
     app.register_blueprint(blueprint)
 
-    from timefliptt.views.api import blueprint
+    from timefliptt.blueprints.api.views import blueprint
     app.register_blueprint(blueprint)
 
     return app
@@ -46,13 +56,7 @@ def init_app():
     """Initialize the app
     """
 
-    from timefliptt.models import Category
-
     db.create_all()
-
-    dummy_cat = Category.create('Dummy')
-    db.session.add(dummy_cat)
-    db.session.commit()
 
 
 def main():

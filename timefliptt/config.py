@@ -15,6 +15,7 @@ class Config:
     # App config
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     DB_FILE = 'timeflip-tt.sqlite'
+    SECRET_KEY = '_wH@t3v3R'
 
     # App info
     APP_INFO = {
@@ -42,22 +43,6 @@ class Config:
                     setattr(self, key, val)
             elif key == key.upper():  # all uppercase keys are also accepted
                 setattr(self, key, val)
-
-    @staticmethod
-    def _is_valid_mac(addr: str) -> bool:
-        """Check if input is a valid MAC address
-        """
-
-        seq = addr.split(':')
-        if len(seq) != 6:
-            return False
-
-        try:
-            data = [int(x, base=16) for x in seq]
-        except ValueError:
-            return False
-
-        return all(0 <= x < 256 for x in data)
 
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:

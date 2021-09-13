@@ -9,3 +9,11 @@ footer  {
     margin-top: 32px;
 }
 
+
+.ins {
+    border: 1px solid #ddd;
+    border-bottom: 2px solid #ddd;
+    border-right: 2px solid #ddd;
+    padding: 8px;
+    border-radius: 8px;
+}

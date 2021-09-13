@@ -238,4 +238,4 @@ cython_debug/
 
 tmp*
 config.yml
-*.sqlite3
+*.sqlite
