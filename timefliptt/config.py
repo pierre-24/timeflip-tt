@@ -1,8 +1,6 @@
 import yaml
 import os
 
-from pytimefliplib.async_client import DEFAULT_PASSWORD
-
 import timefliptt
 
 
@@ -17,12 +15,6 @@ class Config:
     # App config
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     DB_FILE = 'timeflip-tt.sqlite'
-
-    # TimeFlip
-    TIMEFLIP = {
-        'address': '',
-        'password': DEFAULT_PASSWORD
-    }
 
     # App info
     APP_INFO = {
@@ -66,20 +58,6 @@ class Config:
             return False
 
         return all(0 <= x < 256 for x in data)
-
-    def _check(self):
-        """Check data consistency
-        """
-
-        # TimeFlip
-        if self.TIMEFLIP['address']:
-            raise ConfigError('you forgot to set TimeFlip address!')
-
-        if not self._is_valid_mac(self.TIMEFLIP['address']):
-            raise ConfigError('{} is not a valid MAC address'.format(self.TIMEFLIP['address']))
-
-        if len(self.TIMEFLIP['password']) != 6:
-            raise ConfigError('Password must be 6 character long!')
 
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
