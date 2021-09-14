@@ -5,7 +5,7 @@
 
 {% block content %}
     <h1>Log in</h1>
-    <form action="{{ url_for('visitor.login') }}" method="post" class="ins">
+    <form action="{{ url_for('visitor.login') }}" method="post">
         {{ form.csrf_token }}
         {{ form.next(value=next) }}
         {{ render_form_row([form.address, form.password]) }}

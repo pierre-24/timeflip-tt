@@ -27,13 +27,42 @@
         <div class="col-sm-4">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">{{ categories[category_id].name }}</h5>
+                    <h5 class="card-title d-flex justify-content-between">
+                        {{ categories[category_id].name }}
+                        <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
+    <a href="#" class="btn btn-secondary">+</a>
+    <a href="#" class="btn btn-secondary">e</a>
+    <a href="#" class="btn btn-secondary">&times;</a>
+</div>
+                        <!--<div class="dropdown">
+                          <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+
+                          </a>
+                          <div class="dropdown-menu">
+                            <a class="dropdown-item" href="#">Action</a>
+                          </div>
+                        </div>-->
+                    </h5>
                 </div>
                 <ul class="list-group list-group-flush">
                     {% for task in tasks_per_category[category_id] %}
-                        <li class="list-group-item">
-                            <div style="display: inline-block; width: 16px; height: 16px; background: {{ task.color }}"></div>
-                            {{ task.name }}
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>
+                                <div style="display: inline-block; width: 16px; height: 16px; background: {{ task.color }}"></div>
+                                {{ task.name }}
+                            </span>
+                            <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
+    <a href="#" class="btn btn-secondary">e</a>
+    <a href="#" class="btn btn-secondary">&times;</a>
+</div>
+                            <!--<div class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+
+                                </a>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="#">Action</a>
+                                </div>
+                            </div>-->
                         </li>
                     {% endfor %}
                 </ul>
