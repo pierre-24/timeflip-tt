@@ -1,9 +1,45 @@
 {% extends "base.in.html" %}
+{% from 'bootstrap/form.html' import render_form_row, render_field %}
+{% from 'helpers.in.html' import create_modal %}
 {% set active_menu = 'tasks' %}
 
 {% block page_title %}Tasks{% endblock %}
 
 {% block content %}
     <h1>Tasks</h1>
-    <p>this is the content</p>
+    <p>
+        <a class="button-like" href="#modalTask" data-toggle="modal">Add a new task</a>
+        {% set modal_create_content %}
+            {{ form.hidden_tag() }}
+            {{ render_form_row([form.category_id, form.category_name]) }}
+            {{ render_form_row([form.name, form.color]) }}
+        {% endset %}
+        {{ create_modal(
+            'modalTask',
+            'Task',
+            modal_create_content,
+            render_field(form.submit)
+            ) }}
+    </p>
+
+    <div class="row">
+    {% for category_id in tasks_per_category %}
+        <div class="col-sm-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ categories[category_id].name }}</h5>
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for task in tasks_per_category[category_id] %}
+                        <li class="list-group-item">
+                            <div style="display: inline-block; width: 16px; height: 16px; background: {{ task.color }}"></div>
+                            {{ task.name }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+
 {% endblock %}

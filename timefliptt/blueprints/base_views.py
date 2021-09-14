@@ -41,6 +41,8 @@ class FormView(RenderTemplateView):
     modal_form = False
 
     form_kwargs = {}
+    url_args = []
+    url_kwargs = {}
 
     def get_form_kwargs(self) -> dict:
         return self.form_kwargs
