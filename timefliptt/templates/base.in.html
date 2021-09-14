@@ -53,18 +53,14 @@
 {{ render_messages() }}
 </div>
 
-<div class="container">
+<main role="main" id="content" class="container">
+    {% block content %}{% endblock %}
+</main>
 
-
-   <main role="main" id="content" class="container">
-        {% block content %}{% endblock %}
-    </main>
-
-    <footer class="container">
-        {{ app_name }},
-        created by <a href="{{ app_author_url }}">{{ app_author }}</a>  (version: <a href="{{ app_repo_url }}">{{ app_version }}</a>)
-    </footer>
-</div>
+<footer class="container">
+    {{ app_name }},
+    created by <a href="{{ app_author_url }}">{{ app_author }}</a>  (version: <a href="{{ app_repo_url }}">{{ app_version }}</a>)
+</footer>
 
 </body>
 

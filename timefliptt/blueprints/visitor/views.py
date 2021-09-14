@@ -77,6 +77,10 @@ class AddDeviceView(FormView):
     form_class = AddDeviceForm
 
     def form_valid(self, form: AddDeviceForm) -> Union[str, Response]:
+        if form.password.data != form.password_repeat.data:
+            form.password_repeat.errors.append('The two passwords must be the same')
+            return self.form_invalid(form)
+
         user = User.create(form.name.data, form.address.data, form.password.data)
         db.session.add(user)
         db.session.commit()

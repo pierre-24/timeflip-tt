@@ -10,7 +10,8 @@
     </div>
     <form action="{{ url_for('visitor.add-device') }}" method="post" class="ins">
         {{ form.hidden_tag() }}
-        {{ render_form_row([form.address, form.name, form.password]) }}
+        {{ render_form_row([form.address, form.name]) }}
+        {{ render_form_row([form.password, form.password_repeat]) }}
         {{ render_field(form.submit) }}
     </form>
 {% endblock %}

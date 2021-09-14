@@ -23,5 +23,7 @@ class AddDeviceForm(FlaskForm):
     name = f.StringField('Name', validators=[f.validators.InputRequired()])
     address = f.StringField('Address', validators=[f.validators.InputRequired(), is_valid_mac])
     password = f.PasswordField('Password', validators=[f.validators.InputRequired(), f.validators.Length(6)])
+    password_repeat = f.PasswordField(
+        'Repeat password', validators=[f.validators.InputRequired(), f.validators.Length(6)])
 
     submit = f.SubmitField('Add')
