@@ -36,13 +36,12 @@ setup(
 
         # Specify the Python versions:
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
     ],
 
     packages=find_packages(),
-    python_requires='>=3.7',
+    python_requires='>=3.8',
 
     include_package_data=True,
 
