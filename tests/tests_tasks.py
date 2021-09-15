@@ -1,11 +1,11 @@
 import flask
 
-from tests import TestFlask
+from tests import FlaskTestCase
 
 from timefliptt.blueprints.base_models import Category
 
 
-class TestCategory(TestFlask):
+class CategoryTestCase(FlaskTestCase):
     def setUp(self):
         super().setUp()
 

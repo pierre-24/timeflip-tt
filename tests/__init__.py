@@ -10,7 +10,7 @@ from timefliptt.app import create_app, db
 from timefliptt.blueprints.base_models import User
 
 
-class TestFlask(TestCase):
+class FlaskTestCase(TestCase):
 
     def setUp(self):
         # config
