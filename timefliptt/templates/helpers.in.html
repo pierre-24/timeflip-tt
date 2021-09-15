@@ -23,3 +23,17 @@
         </form>
     </div>
 {% endmacro %}
+{%  macro create_delete_modal(id, title, action='', method='post') %}
+    {% set modal_content %}
+        <input type="hidden" name="{{ id }}_id" id="{{ id }}_id" value="">
+        <div id="{{ id }}_placeholder"></div>
+    {% endset %}
+    {{ create_modal(
+            id,
+            title,
+            modal_content,
+            '<button type="submit" class="btn btn-danger">Delete</button>',
+            action=action,
+            method=method
+    ) }}
+{% endmacro %}

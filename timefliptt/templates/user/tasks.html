@@ -1,6 +1,6 @@
 {% extends "base.in.html" %}
 {% from 'bootstrap/form.html' import render_form_row, render_field %}
-{% from 'helpers.in.html' import create_modal %}
+{% from 'helpers.in.html' import create_modal, create_delete_modal %}
 {% set active_menu = 'tasks' %}
 
 {% block page_title %}Tasks{% endblock %}
@@ -26,11 +26,9 @@
         ) }}
 
     {# Task delete modal #}
-    {{ create_modal(
-        'modalCategoryDelete',
+    {{ create_delete_modal(
+        'category_delete',
         'Delete category',
-        '<input type="hidden" name="category_delete_id" id="category_delete_id" value=""><div id="modalCategoryDeletePH"></div>',
-        '<button type="submit" class="btn btn-danger">Delete</button>',
         action=url_for('user.category-delete')
     ) }}
 
@@ -49,11 +47,9 @@
         ) }}
 
     {# Task delete modal #}
-    {{ create_modal(
-        'modalTaskDelete',
+    {{ create_delete_modal(
+        'task_delete',
         'Delete task',
-        '<input type="hidden" name="task_delete_id" id="task_delete_id" value=""><div id="modalTaskDeletePH"></div>',
-        '<button type="submit" class="btn btn-danger">Delete</button>',
         action=url_for('user.task-delete')
     ) }}
 
@@ -70,8 +66,8 @@
                              &middot;&middot;&middot;
                           </a>
                           <div class="dropdown-menu">
-                            <a href="#" class="dropdown-item categoryEditLink" data-category-id="{{ category_id }}" data-category-name="{{ categories[category_id].name }}">Edit</a>
-                            <a href="#" class="dropdown-item categoryDeleteLink" data-category-id="{{ category_id }}" data-placeholder="Remove category <b>{{ categories[category_id].name }}</b> and all its tasks?">Remove</a>
+                            <a href="#" class="dropdown-item categoryEditLink" data-id="{{ category_id }}" data-name="{{ categories[category_id].name }}">Edit</a>
+                            <a href="#" class="dropdown-item categoryDeleteLink" data-id="{{ category_id }}" data-placeholder="Remove category <b>{{ categories[category_id].name }}</b> and all its tasks?">Remove</a>
                           </div>
                         </div>
                     </h5>
@@ -83,8 +79,8 @@
                                     <span class="task-color" style="background: {{ task.color }}"></span>
                                     {{ task.name }}
 
-                                    <a class="taskEditLink" href="#" data-category-id="{{ category_id }}" data-task-id="{{ task.id }}" data-task-name="{{ task.name }}" data-task-color="{{ task.color }}">e</a>
-                                    <a class="taskDeleteLink" href="#" data-task-id="{{ task.id }}" data-placeholder="Delete task <b>{{ task.name }}</b>?">&times;</a>
+                                    <a class="taskEditLink" href="#" data-category-id="{{ category_id }}" data-id="{{ task.id }}" data-name="{{ task.name }}" data-color="{{ task.color }}">e</a>
+                                    <a class="taskDeleteLink" href="#" data-id="{{ task.id }}" data-placeholder="Delete task <b>{{ task.name }}</b>?">&times;</a>
                                 </span>
                             {% endfor %}
                         {% endif %}
@@ -106,80 +102,45 @@
     <script>
         "use strict";
 
-        function modify_category(category_id, category_name) {
-            // set form
-            document.getElementById('category_id').value = category_id;
-            document.getElementById('category_name').value = category_name;
-
-            // show modal
-            $('#modalCategory').modal('show');
-        }
-
-        function delete_category(category_id, placeholder)  {
-            document.getElementById('category_delete_id').value = category_id
-            document.getElementById('modalCategoryDeletePH').innerHTML = placeholder
-
-            // show modal
-            $('#modalCategoryDelete').modal('show');
-        }
-
-        function create_task(category_id) {
-            // set form
-            document.getElementById('category').value = category_id;
-
-            // show modal
-            $('#modalTask').modal('show');
-        }
-
-        function modify_task(task_id, category_id, task_name, task_color) {
-            // set form
-            document.getElementById('task_id').value = task_id;
-            document.getElementById('category').value = category_id;
-            document.getElementById('task_name').value = task_name;
-            document.getElementById('color').value = task_color;
-
-            // show modal
-            $('#modalTask').modal('show');
-        }
-
-        function delete_task(task_id, placeholder)  {
-            document.getElementById('task_delete_id').value = task_id
-            document.getElementById('modalTaskDeletePH').innerHTML = placeholder
-
-            // show modal
-            $('#modalTaskDelete').modal('show');
-        }
-
-        window.addEventListener('load', () =>  {
-            Array.from(document.getElementsByClassName('categoryEditLink')).forEach(e => {
-                e.addEventListener('click', () => {
-                    modify_category(e.dataset.categoryId, e.dataset.categoryName);
-                })
-            });
-
-            Array.from(document.getElementsByClassName('categoryDeleteLink')).forEach(e => {
-                e.addEventListener('click', () => {
-                    delete_category(e.dataset.categoryId, e.dataset.placeholder);
-                })
-            });
-
-            Array.from(document.getElementsByClassName('taskCreateLink')).forEach(e => {
-                e.addEventListener('click', () => {
-                    create_task(e.dataset.categoryId);
-                })
-            });
-
-            Array.from(document.getElementsByClassName('taskEditLink')).forEach(e => {
-                e.addEventListener('click', () => {
-                    modify_task(e.dataset.taskId, e.dataset.categoryId, e.dataset.taskName, e.dataset.taskColor);
-                })
-            });
-
-            Array.from(document.getElementsByClassName('taskDeleteLink')).forEach(e => {
-                e.addEventListener('click', () => {
-                    delete_task(e.dataset.taskId, e.dataset.placeholder);
-                })
-            });
-        })
+        setup_modals([
+            {
+                class_name: 'categoryEditLink',
+                modal: 'modalCategory',
+                dataset_to_input: {
+                    'category_id': 'id',
+                    'category_name': 'name'
+                }
+            }, {
+                class_name: 'categoryDeleteLink',
+                modal: 'category_delete',
+                dataset_to_input: {
+                    'category_delete_id': 'id',
+                    'category_delete_placeholder': 'placeholder'
+                }
+            }, {
+                class_name: 'taskCreateLink',
+                modal: 'modalTask',
+                dataset_to_input: {
+                    'category': 'id'
+                }
+            }, {
+                class_name: 'taskEditLink',
+                modal: 'modalTask',
+                dataset_to_input: {
+                    'category': 'categoryId',
+                    'task_id': 'id',
+                    'task_name': 'name',
+                    'color': 'color'
+                }
+            }, {
+                class_name: 'taskDeleteLink',
+                modal: 'task_delete',
+                dataset_to_input: {
+                    'task_delete_id': 'id',
+                    'task_delete_placeholder':
+                        'placeholder'
+                }
+            }
+        ]);
     </script>
 {% endblock %}

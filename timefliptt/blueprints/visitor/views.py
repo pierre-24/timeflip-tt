@@ -36,7 +36,7 @@ class LoginView(FormView):
     def get_form(self) -> FlaskForm:
         form = super().get_form()
         form.address.choices = [
-            (u.device_address, '{} ({})'.format(u.device_address, u.category_name)) for u in User.query.all()
+            (u.device_address, '{} ({})'.format(u.device_address, u.name)) for u in User.query.all()
         ]
 
         return form

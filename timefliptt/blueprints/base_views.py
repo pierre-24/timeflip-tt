@@ -4,6 +4,7 @@ import flask
 from flask import current_app, Response
 from flask.views import MethodView
 from flask_wtf import FlaskForm
+from sqlalchemy.exc import SQLAlchemyError
 
 from timefliptt.app import db
 
@@ -110,7 +111,7 @@ class FormView(RenderTemplateView, FormPostView):
 
 class DeleteView(MethodView):
 
-    success_url = '/'
+    success_url = ''
 
     def get_object_to_delete(self, *args, **kwargs):
         raise NotImplementedError()
@@ -131,7 +132,18 @@ class DeleteView(MethodView):
 
         self.post_deletion(obj)
 
-        return flask.redirect(self.success_url)
+        return flask.redirect(flask.url_for(self.success_url))
 
     def post(self, *args, **kwargs):
         return self.delete(*args, **kwargs)
+
+
+class DeleteObjectView(DeleteView):
+    object_class: ClassVar = None
+    kwarg_var = 'id'
+
+    def get_object_to_delete(self, *args, **kwargs):
+        try:
+            return self.object_class.query.get(flask.request.form.get(self.kwarg_var, -1))
+        except SQLAlchemyError:
+            return None

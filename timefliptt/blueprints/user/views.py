@@ -7,7 +7,7 @@ from typing import Union
 
 from timefliptt.app import db
 from timefliptt.blueprints.base_models import Category, Task
-from timefliptt.blueprints.base_views import RenderTemplateView, FormPostView, DeleteView
+from timefliptt.blueprints.base_views import RenderTemplateView, FormPostView, DeleteObjectView
 from timefliptt.blueprints.user.forms import TaskForm, CategoryForm
 
 blueprint = Blueprint('user', __name__)
@@ -82,7 +82,7 @@ class TaskEditView(LoginRequiredMixin, FormPostView):
                 task = Task.query.get(form.task_id.data)
 
                 task.category_id = category.id
-                task.category_name = form.task_name.data
+                task.name = form.task_name.data
                 task.color = form.color.data
 
             except sqlalchemy.exc.SQLAlchemyError:
@@ -99,12 +99,10 @@ class TaskEditView(LoginRequiredMixin, FormPostView):
 blueprint.add_url_rule('/tasks/edit-task', view_func=TaskEditView.as_view('task-edit'))
 
 
-class TaskDeleteView(LoginRequiredMixin, DeleteView):
-    def get_object_to_delete(self, *args, **kwargs):
-        try:
-            return Task.query.get(flask.request.form.get('task_delete_id', -1))
-        except sqlalchemy.exc.SQLAlchemyError:
-            return None
+class TaskDeleteView(LoginRequiredMixin, DeleteObjectView):
+    success_url = 'user.tasks'
+    object_class = Task
+    kwarg_var = 'task_delete_id'
 
 
 blueprint.add_url_rule('/tasks/delete-task', view_func=TaskDeleteView.as_view('task-delete'))
@@ -136,15 +134,14 @@ class CategoryEditView(LoginRequiredMixin, FormPostView):
 blueprint.add_url_rule('/tasks/edit-category', view_func=CategoryEditView.as_view('category-edit'))
 
 
-class CategoryDeleteView(LoginRequiredMixin, DeleteView):
-    def get_object_to_delete(self, *args, **kwargs):
-        try:
-            return Category.query.get(flask.request.form.get('category_delete_id', -1))
-        except sqlalchemy.exc.SQLAlchemyError:
-            return None
+class CategoryDeleteView(LoginRequiredMixin, DeleteObjectView):
+    success_url = 'user.tasks'
+    object_class = Category
+    kwarg_var = 'category_delete_id'
 
     def post_deletion(self, obj):
-        self.success_url = flask.url_for('user.tasks')
+        """Also delete corresponding tasks
+        """
 
         tasks = Task.query.filter(Task.category_id.is_(obj.id)).all()
 
