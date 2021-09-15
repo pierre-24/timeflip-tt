@@ -1,6 +1,6 @@
-{% macro create_modal(id, title, content, bottom='', action='', multipart=False) %}
+{% macro create_modal(id, title, content, bottom='', action='', multipart=False, method='post') %}
   <div id="{{ id }}" class="modal fade" role="dialog">
-        <form class="modal-dialog" method="post" {% if action %}action="{{ action }}"{% endif %} {% if multipart %}enctype="multipart/form-data"{% endif %}>
+        <form class="modal-dialog" method="{{ method }}" {% if action %}action="{{ action }}"{% endif %} {% if multipart %}enctype="multipart/form-data"{% endif %}>
         <div class="modal-content">
             <div class="modal-header">
                 <h5>{{ title|safe }}</h5>

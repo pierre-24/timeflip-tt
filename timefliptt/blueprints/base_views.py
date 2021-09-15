@@ -5,6 +5,8 @@ from flask import current_app, Response
 from flask.views import MethodView
 from flask_wtf import FlaskForm
 
+from timefliptt.app import db
+
 
 class ContextDataMixin:
     """Defines the context data mixin, with some extra information
@@ -104,3 +106,32 @@ class FormView(RenderTemplateView, FormPostView):
                     print('-', i, '→', i.errors, '(value is=', i.data, ')')
 
         return self.get(form=form, *self.url_args, **self.url_kwargs)
+
+
+class DeleteView(MethodView):
+
+    success_url = '/'
+
+    def get_object_to_delete(self, *args, **kwargs):
+        raise NotImplementedError()
+
+    def post_deletion(self, obj):
+        """Performs an action after deletion from database"""
+        pass
+
+    def delete(self, *args, **kwargs) -> Union[Response, str]:
+        """Handle delete"""
+
+        obj = self.get_object_to_delete(*args, **kwargs)
+        if obj is None:
+            flask.abort(403)
+
+        db.session.delete(obj)
+        db.session.commit()
+
+        self.post_deletion(obj)
+
+        return flask.redirect(self.success_url)
+
+    def post(self, *args, **kwargs):
+        return self.delete(*args, **kwargs)

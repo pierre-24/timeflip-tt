@@ -7,68 +7,179 @@
 
 {% block content %}
     <h1>Tasks</h1>
+
     <p>
-        <a class="button-like" href="#modalTask" data-toggle="modal">Add a new task</a>
-        {% set modal_create_content %}
-            {{ form.hidden_tag() }}
-            {{ render_form_row([form.category_id, form.category_name]) }}
-            {{ render_form_row([form.name, form.color]) }}
-        {% endset %}
-        {{ create_modal(
-            'modalTask',
-            'Task',
-            modal_create_content,
-            render_field(form.submit)
-            ) }}
+        <a class="btn btn-secondary" href="#modalCategory" data-toggle="modal">+ New category</a>
     </p>
 
+    {# Category modal #}
+    {% set modal_create_content %}
+        {{ form_category.hidden_tag() }}
+        {{ render_field(form_category.category_name) }}
+    {% endset %}
+    {{ create_modal(
+        'modalCategory',
+        'Category',
+        modal_create_content,
+        render_field(form_category.submit),
+        action=url_for('user.category-edit')
+        ) }}
+
+    {# Task delete modal #}
+    {{ create_modal(
+        'modalCategoryDelete',
+        'Delete category',
+        '<input type="hidden" name="category_delete_id" id="category_delete_id" value=""><div id="modalCategoryDeletePH"></div>',
+        '<button type="submit" class="btn btn-danger">Delete</button>',
+        action=url_for('user.category-delete')
+    ) }}
+
+    {# Task modal #}
+    {% set modal_create_content %}
+        {{ form_task.hidden_tag() }}
+        {{ render_form_row([form_task.category]) }}
+        {{ render_form_row([form_task.task_name, form_task.color]) }}
+    {% endset %}
+    {{ create_modal(
+        'modalTask',
+        'Task',
+        modal_create_content,
+        render_field(form_task.submit),
+        action=url_for('user.task-edit')
+        ) }}
+
+    {# Task delete modal #}
+    {{ create_modal(
+        'modalTaskDelete',
+        'Delete task',
+        '<input type="hidden" name="task_delete_id" id="task_delete_id" value=""><div id="modalTaskDeletePH"></div>',
+        '<button type="submit" class="btn btn-danger">Delete</button>',
+        action=url_for('user.task-delete')
+    ) }}
+
     <div class="row">
-    {% for category_id in tasks_per_category %}
-        <div class="col-sm-4">
-            <div class="card">
+    {% for category_id in categories %}
+        <div class="col-sm-6">
+            <div class="card mb-4">
                 <div class="card-body">
                     <h5 class="card-title d-flex justify-content-between">
                         {{ categories[category_id].name }}
-                        <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
-    <a href="#" class="btn btn-secondary">+</a>
-    <a href="#" class="btn btn-secondary">e</a>
-    <a href="#" class="btn btn-secondary">&times;</a>
-</div>
-                        <!--<div class="dropdown">
-                          <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 
+                        <div class="dropdown">
+                          <a href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="category-dropdown">
+                             &middot;&middot;&middot;
                           </a>
                           <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#">Action</a>
+                            <a href="#" class="dropdown-item categoryEditLink" data-category-id="{{ category_id }}" data-category-name="{{ categories[category_id].name }}">Edit</a>
+                            <a href="#" class="dropdown-item categoryDeleteLink" data-category-id="{{ category_id }}" data-placeholder="Remove category <b>{{ categories[category_id].name }}</b> and all its tasks?">Remove</a>
                           </div>
-                        </div>-->
+                        </div>
                     </h5>
-                </div>
-                <ul class="list-group list-group-flush">
-                    {% for task in tasks_per_category[category_id] %}
-                        <li class="list-group-item d-flex justify-content-between">
-                            <span>
-                                <div style="display: inline-block; width: 16px; height: 16px; background: {{ task.color }}"></div>
-                                {{ task.name }}
-                            </span>
-                            <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
-    <a href="#" class="btn btn-secondary">e</a>
-    <a href="#" class="btn btn-secondary">&times;</a>
-</div>
-                            <!--<div class="dropdown">
-                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 
-                                </a>
-                                <div class="dropdown-menu">
-                                    <a class="dropdown-item" href="#">Action</a>
-                                </div>
-                            </div>-->
-                        </li>
-                    {% endfor %}
-                </ul>
+                    <p class="task-pills">
+                        {%  if category_id in tasks_per_category %}
+                            {% for task in tasks_per_category[category_id] %}
+                                <span class="task-pill">
+                                    <span class="task-color" style="background: {{ task.color }}"></span>
+                                    {{ task.name }}
+
+                                    <a class="taskEditLink" href="#" data-category-id="{{ category_id }}" data-task-id="{{ task.id }}" data-task-name="{{ task.name }}" data-task-color="{{ task.color }}">e</a>
+                                    <a class="taskDeleteLink" href="#" data-task-id="{{ task.id }}" data-placeholder="Delete task <b>{{ task.name }}</b>?">&times;</a>
+                                </span>
+                            {% endfor %}
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a class="btn btn-secondary taskCreateLink" href="#" data-category-id="{{ category_id }}">+ new task</a>
+                </div>
             </div>
         </div>
     {% endfor %}
     </div>
 
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+
+    <script>
+        "use strict";
+
+        function modify_category(category_id, category_name) {
+            // set form
+            document.getElementById('category_id').value = category_id;
+            document.getElementById('category_name').value = category_name;
+
+            // show modal
+            $('#modalCategory').modal('show');
+        }
+
+        function delete_category(category_id, placeholder)  {
+            document.getElementById('category_delete_id').value = category_id
+            document.getElementById('modalCategoryDeletePH').innerHTML = placeholder
+
+            // show modal
+            $('#modalCategoryDelete').modal('show');
+        }
+
+        function create_task(category_id) {
+            // set form
+            document.getElementById('category').value = category_id;
+
+            // show modal
+            $('#modalTask').modal('show');
+        }
+
+        function modify_task(task_id, category_id, task_name, task_color) {
+            // set form
+            document.getElementById('task_id').value = task_id;
+            document.getElementById('category').value = category_id;
+            document.getElementById('task_name').value = task_name;
+            document.getElementById('color').value = task_color;
+
+            // show modal
+            $('#modalTask').modal('show');
+        }
+
+        function delete_task(task_id, placeholder)  {
+            document.getElementById('task_delete_id').value = task_id
+            document.getElementById('modalTaskDeletePH').innerHTML = placeholder
+
+            // show modal
+            $('#modalTaskDelete').modal('show');
+        }
+
+        window.addEventListener('load', () =>  {
+            Array.from(document.getElementsByClassName('categoryEditLink')).forEach(e => {
+                e.addEventListener('click', () => {
+                    modify_category(e.dataset.categoryId, e.dataset.categoryName);
+                })
+            });
+
+            Array.from(document.getElementsByClassName('categoryDeleteLink')).forEach(e => {
+                e.addEventListener('click', () => {
+                    delete_category(e.dataset.categoryId, e.dataset.placeholder);
+                })
+            });
+
+            Array.from(document.getElementsByClassName('taskCreateLink')).forEach(e => {
+                e.addEventListener('click', () => {
+                    create_task(e.dataset.categoryId);
+                })
+            });
+
+            Array.from(document.getElementsByClassName('taskEditLink')).forEach(e => {
+                e.addEventListener('click', () => {
+                    modify_task(e.dataset.taskId, e.dataset.categoryId, e.dataset.taskName, e.dataset.taskColor);
+                })
+            });
+
+            Array.from(document.getElementsByClassName('taskDeleteLink')).forEach(e => {
+                e.addEventListener('click', () => {
+                    delete_task(e.dataset.taskId, e.dataset.placeholder);
+                })
+            });
+        })
+    </script>
 {% endblock %}

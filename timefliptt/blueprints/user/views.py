@@ -1,4 +1,5 @@
 import flask
+import sqlalchemy.exc
 from flask import Blueprint, Response
 from flask_login import login_required
 
@@ -6,8 +7,8 @@ from typing import Union
 
 from timefliptt.app import db
 from timefliptt.blueprints.base_models import Category, Task
-from timefliptt.blueprints.base_views import RenderTemplateView, FormView
-from timefliptt.blueprints.user.forms import TaskForm
+from timefliptt.blueprints.base_views import RenderTemplateView, FormPostView, DeleteView
+from timefliptt.blueprints.user.forms import TaskForm, CategoryForm
 
 blueprint = Blueprint('user', __name__)
 
@@ -23,21 +24,20 @@ class GraphsView(LoginRequiredMixin, RenderTemplateView):
 blueprint.add_url_rule('/graphs', view_func=GraphsView.as_view('graphs'))
 
 
-class TasksView(LoginRequiredMixin, FormView):
+# --- Tasks
+class TasksView(LoginRequiredMixin, RenderTemplateView):
     template_name = 'user/tasks.html'
-    form_class = TaskForm
-    modal_form = True
 
     def get_context_data(self, *args, **kwargs) -> dict:
         ctx = super().get_context_data(*args, **kwargs)
 
-        tasks = Task.query.order_by(Task.category_id, Task.date_created.desc()).all()
+        # list of task and categories
+        categories = dict((c.id, c) for c in Category.query.all())
+        tasks = Task.query.order_by(Task.id.desc()).all()
 
-        categories = {}
         tasks_per_category = {}
         for task in tasks:
             if task.category_id not in tasks_per_category:
-                categories[task.category_id] = task.category
                 tasks_per_category[task.category_id] = []
 
             tasks_per_category[task.category_id].append(task)
@@ -45,29 +45,50 @@ class TasksView(LoginRequiredMixin, FormView):
         ctx['tasks_per_category'] = tasks_per_category
         ctx['categories'] = categories
 
+        # form
+        ctx['form_task'] = TaskForm()
+        ctx['form_task'].category.choices = list((k, v.name) for k, v in categories.items())
+
+        ctx['form_category'] = CategoryForm()
+
         return ctx
+
+
+blueprint.add_url_rule('/tasks', view_func=TasksView.as_view('tasks'))
+
+
+class TaskEditView(LoginRequiredMixin, FormPostView):
+    form_class = TaskForm
 
     def get_form(self) -> TaskForm:
         form = super().get_form()
-        form.category_id.choices.extend((c.id, c.name) for c in Category.query.all())
+        form.category.choices = list((c.id, c.name) for c in Category.query.all())
 
         return form
 
     def form_valid(self, form: TaskForm) -> Union[str, Response]:
-        if form.category_id.data < 0:
-            if len(form.category_name.data) == 0:
-                form.category_name.errors.append("Name shouldn't be empty")
+        # get category
+        try:
+            category = Category.query.get(form.category.data)
+        except sqlalchemy.exc.SQLAlchemyError:
+            form.category.errors.append('Category does not exists?!?')
+            return self.form_invalid(form)
+
+        # create or modify task
+        if form.task_id.data < 0:  # create new
+            task = Task.create(form.task_name.data, category.id, form.color.data)
+        else:  # edit
+            try:
+                task = Task.query.get(form.task_id.data)
+
+                task.category_id = category.id
+                task.category_name = form.task_name.data
+                task.color = form.color.data
+
+            except sqlalchemy.exc.SQLAlchemyError:
+                form.task_id.errors.append('Task does not exists?!?')
                 return self.form_invalid(form)
 
-            category = Category.create(form.category_name.data)
-            db.session.add(category)
-            db.session.commit()
-
-            category_id = category.id
-        else:
-            category_id = form.category_id.data
-
-        task = Task.create(form.name.data, category_id, form.color.data)
         db.session.add(task)
         db.session.commit()
 
@@ -75,9 +96,69 @@ class TasksView(LoginRequiredMixin, FormView):
         return super().form_valid(form)
 
 
-blueprint.add_url_rule('/tasks', view_func=TasksView.as_view('tasks'))
+blueprint.add_url_rule('/tasks/edit-task', view_func=TaskEditView.as_view('task-edit'))
 
 
+class TaskDeleteView(LoginRequiredMixin, DeleteView):
+    def get_object_to_delete(self, *args, **kwargs):
+        try:
+            return Task.query.get(flask.request.form.get('task_delete_id', -1))
+        except sqlalchemy.exc.SQLAlchemyError:
+            return None
+
+
+blueprint.add_url_rule('/tasks/delete-task', view_func=TaskDeleteView.as_view('task-delete'))
+
+
+class CategoryEditView(LoginRequiredMixin, FormPostView):
+    form_class = CategoryForm
+
+    def form_valid(self, form: CategoryForm) -> Union[str, Response]:
+
+        if form.category_id.data < 0:  # create new
+            category = Category.create(form.category_name.data)
+        else:  # edit
+            try:
+                category = Category.query.get(form.category_id.data)
+                category.name = form.category_name.data
+
+            except sqlalchemy.exc.SQLAlchemyError:
+                form.task_id.errors.append('Category does not exists?!?')
+                return self.form_invalid(form)
+
+        db.session.add(category)
+        db.session.commit()
+
+        self.success_url = flask.url_for('user.tasks')
+        return super().form_valid(form)
+
+
+blueprint.add_url_rule('/tasks/edit-category', view_func=CategoryEditView.as_view('category-edit'))
+
+
+class CategoryDeleteView(LoginRequiredMixin, DeleteView):
+    def get_object_to_delete(self, *args, **kwargs):
+        try:
+            return Category.query.get(flask.request.form.get('category_delete_id', -1))
+        except sqlalchemy.exc.SQLAlchemyError:
+            return None
+
+    def post_deletion(self, obj):
+        self.success_url = flask.url_for('user.tasks')
+
+        tasks = Task.query.filter(Task.category_id.is_(obj.id)).all()
+
+        if len(tasks) > 0:
+            for task in tasks:
+                db.session.delete(task)
+
+            db.session.commit()
+
+
+blueprint.add_url_rule('/tasks/delete-category', view_func=CategoryDeleteView.as_view('category-delete'))
+
+
+# -- History
 class History(LoginRequiredMixin, RenderTemplateView):
     template_name = 'user/history.html'
 
