@@ -11,3 +11,6 @@ install:
 
 lint:
 	flake8 timefliptt --max-line-length=120 --ignore=N802
+
+test:
+	python -m unittest discover -s tests

@@ -31,7 +31,6 @@ jobs:
     - name: Lint
       run: |
         make lint
-# TODO: tests
-#    - name: Test
-#      run: |
-#        make test
+    - name: Test
+      run: |
+        make test
