@@ -47,7 +47,7 @@ class TasksView(LoginRequiredMixin, RenderTemplateView):
 
         # form
         ctx['form_task'] = TaskForm()
-        ctx['form_task'].category.choices = list((k, v.name) for k, v in categories.items())
+        ctx['form_task'].category_1.choices = list((k, v.name) for k, v in categories.items())
 
         ctx['form_category'] = CategoryForm()
 

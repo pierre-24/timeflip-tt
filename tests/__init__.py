@@ -60,7 +60,7 @@ class FlaskTestCase(TestCase):
 
     def logout(self):
         """Logout client"""
-        self.client.get(flask.url_for('admin.logout'), follow_redirects=False)
+        self.client.get(flask.url_for('visitor.logout'), follow_redirects=False)
 
         response = self.client.get(flask.url_for('user.graphs'), follow_redirects=False)
         self.assertEqual(response.status_code, 302)

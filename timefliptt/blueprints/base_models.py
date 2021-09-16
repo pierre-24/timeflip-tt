@@ -50,7 +50,7 @@ class Category(BaseModel):
 class Task(BaseModel):
 
     name = db.Column(db.VARCHAR(length=150), nullable=False)
-    color = db.Column(db.VARCHAR(length=6), nullable=False)
+    color = db.Column(db.VARCHAR(length=7), nullable=False)
 
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
     category = db.relationship('Category', uselist=False)
