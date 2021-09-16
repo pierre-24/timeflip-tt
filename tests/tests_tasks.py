@@ -165,12 +165,44 @@ class TaskTestCase(FlaskTestCase):
         self.assertEqual(color, t.color)
         self.assertEqual(self.category_1.id, t.category_id)
 
-    def test_create_task__not_logged_ko(self):
+    def test_create_task_not_logged_ko(self):
         self.logout()
         self.assertEqual(self.num_task, Task.query.count())
 
         name = 'whatever'
         color = '#ff0000'
+
+        response = self.client.post(flask.url_for('user.task-edit'), data={
+            'task_id': -1,
+            'category': self.category_1.id,
+            'task_name': name,
+            'color': color
+        }, follow_redirects=False)
+        self.assertEqual(response.status_code, 302)
+
+        self.assertEqual(self.num_task, Task.query.count())
+
+    def test_create_task_unknown_cat_ko(self):
+        self.assertEqual(self.num_task, Task.query.count())
+
+        name = 'whatever'
+        color = '#ff0000'
+
+        response = self.client.post(flask.url_for('user.task-edit'), data={
+            'task_id': -1,
+            'category': self.num_category + 1,
+            'task_name': name,
+            'color': color
+        }, follow_redirects=False)
+        self.assertEqual(response.status_code, 302)
+
+        self.assertEqual(self.num_task, Task.query.count())
+
+    def test_create_task_unknown_color_ko(self):
+        self.assertEqual(self.num_task, Task.query.count())
+
+        name = 'whatever'
+        color = 'red'  # not the good format for a color
 
         response = self.client.post(flask.url_for('user.task-edit'), data={
             'task_id': -1,
@@ -209,6 +241,48 @@ class TaskTestCase(FlaskTestCase):
 
         name = 'whatever'
         color = '#ff0000'
+
+        response = self.client.post(flask.url_for('user.task-edit'), data={
+            'task_id': self.task_2_1.id,
+            'category': self.category_1.id,
+            'task_name': name,
+            'color': color
+        }, follow_redirects=False)
+        self.assertEqual(response.status_code, 302)
+
+        self.assertEqual(self.num_task, Task.query.count())
+
+        t = Task.query.get(self.task_2_1.id)
+        self.assertNotEqual(name, t.name)
+        self.assertNotEqual(color, t.color)
+        self.assertNotEqual(self.category_1.id, t.category_id)
+
+    def test_modify_task_unknown_cat_ko(self):
+        self.assertEqual(self.num_task, Task.query.count())
+
+        name = 'whatever'
+        color = '#ff0000'
+
+        response = self.client.post(flask.url_for('user.task-edit'), data={
+            'task_id': self.task_2_1.id,
+            'category': self.num_category + 1,
+            'task_name': name,
+            'color': color
+        }, follow_redirects=False)
+        self.assertEqual(response.status_code, 302)
+
+        self.assertEqual(self.num_task, Task.query.count())
+
+        t = Task.query.get(self.task_2_1.id)
+        self.assertNotEqual(name, t.name)
+        self.assertNotEqual(color, t.color)
+        self.assertNotEqual(self.category_1.id, t.category_id)
+
+    def test_modify_task_unknown_color_ko(self):
+        self.assertEqual(self.num_task, Task.query.count())
+
+        name = 'whatever'
+        color = 'red'
 
         response = self.client.post(flask.url_for('user.task-edit'), data={
             'task_id': self.task_2_1.id,
