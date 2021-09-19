@@ -53,7 +53,7 @@ class TimeFlipDaemon:
                 self._run_coro(self._coro_disconnect)
                 connected_and_setup = False
 
-    def run_coro(self, coro: Callable[[AsyncClient, ...], Coroutine], **kwargs) -> Any:
+    def run_coro(self, coro: Callable[[AsyncClient, Any], Coroutine], **kwargs) -> Any:
         global lock
 
         with lock:
@@ -68,7 +68,7 @@ class TimeFlipDaemon:
             loop.call_soon_threadsafe(loop.stop)
             thread.join()
 
-    def _run_coro(self, coro: Callable[[AsyncClient, ...], Coroutine], **kwargs) -> Any:
+    def _run_coro(self, coro: Callable[[AsyncClient, Any], Coroutine], **kwargs) -> Any:
         global client, loop
 
         try:
