@@ -57,6 +57,10 @@ class LoginView(FormView):
         if flask.current_app.config.get('WITH_TIMEFLIP', False):
             try:
                 hard_connect(form.address.data, form.password.data)
+
+                flask.session['address'] = form.address.data
+                flask.session['password'] = form.password.data
+
                 flask.flash('You are now connected to the app as well as the TimeFlip.')
             except TimeFlipRuntimeError as e:
                 flask.flash(
@@ -83,6 +87,9 @@ def logout():
     flask_login.logout_user()
 
     if flask.current_app.config.get('WITH_TIMEFLIP', False):
+        del flask.session['address']
+        del flask.session['password']
+
         hard_logout()
 
     flask.flash('You are now disconnected.')

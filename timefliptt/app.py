@@ -1,14 +1,14 @@
 import argparse
 import atexit
 
-from flask import Flask
+import flask
 from flask_bootstrap import Bootstrap
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 
 import timefliptt
 from timefliptt.config import Config
-from timefliptt.timeflip import daemon_start, daemon_stop
+from timefliptt.timeflip import daemon_start, daemon_stop, soft_connect
 
 
 db = SQLAlchemy()
@@ -22,8 +22,8 @@ def load_user(user_id):
     return user
 
 
-def create_app(config: Config) -> Flask:
-    app = Flask(__name__)
+def create_app(config: Config) -> flask.Flask:
+    app = flask.Flask(__name__)
     app.config.from_object(config)
 
     # module
@@ -83,6 +83,9 @@ def main():
     def setup_thread():
         atexit.register(stop_app)
         daemon_start()
+
+        if 'address' in flask.session:
+            soft_connect(flask.session['address'], flask.session.get('password', ''))
 
     if not args.init:  # run webserver
         app.run()
