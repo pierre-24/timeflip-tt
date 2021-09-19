@@ -7,12 +7,27 @@
 
 {% block content %}
     <h1>TimeFlip</h1>
+    <p class="text-muted">{{ current_user.name }} @ {{ current_user.device_address }}</p>
 
     <p>
+        <a class="btn btn-secondary" href="#modalName" data-toggle="modal">Change name</a>
         <a class="btn btn-secondary" href="#modalPassword" data-toggle="modal">Change password</a>
     </p>
 
-    {# Category modal #}
+    {# Name modal #}
+    {% set modal_create_content %}
+        {{ form_modify_name.hidden_tag() }}
+        {{ render_field(form_modify_name.name) }}
+    {% endset %}
+    {{ create_modal(
+        'modalName',
+        'Change name',
+        modal_create_content,
+        render_field(form_modify_passwd.submit),
+        action=url_for('user.timeflip-modify-name')
+        ) }}
+
+    {# Password modal #}
     {% set modal_create_content %}
         {{ form_modify_passwd.hidden_tag() }}
         {{ render_field(form_modify_passwd.old_password) }}

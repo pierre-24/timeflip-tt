@@ -12,7 +12,7 @@ from timefliptt.app import db
 from timefliptt.timeflip import run_coro, soft_connect
 from timefliptt.blueprints.base_models import Category, Task, User
 from timefliptt.blueprints.base_views import RenderTemplateView, FormPostView, DeleteObjectView, LoginRequiredMixin
-from timefliptt.blueprints.user.forms import TaskForm, CategoryForm, ModifyPasswordForm
+from timefliptt.blueprints.user.forms import TaskForm, CategoryForm, ModifyDevicePasswordForm, ModifyDeviceNameForm
 
 blueprint = Blueprint('user', __name__)
 
@@ -32,7 +32,9 @@ class TimeflipView(LoginRequiredMixin, RenderTemplateView):
     def get_context_data(self, *args, **kwargs) -> dict:
         ctx = super().get_context_data(*args, **kwargs)
 
-        ctx['form_modify_passwd'] = ModifyPasswordForm()
+        ctx['form_modify_passwd'] = ModifyDevicePasswordForm()
+        ctx['form_modify_name'] = ModifyDeviceNameForm()
+        ctx['form_modify_name'].name.data = flask_login.current_user.name
 
         return ctx
 
@@ -40,14 +42,14 @@ class TimeflipView(LoginRequiredMixin, RenderTemplateView):
 blueprint.add_url_rule('/timeflip', view_func=TimeflipView.as_view('timeflip'))
 
 
-class ModifyPasswordView(LoginRequiredMixin, FormPostView):
-    form_class = ModifyPasswordForm
+class ModifyDevicePasswordView(LoginRequiredMixin, FormPostView):
+    form_class = ModifyDevicePasswordForm
 
     @staticmethod
     async def set_new_password(client: AsyncClient, password: str):
         await client.set_password(password)
 
-    def form_valid(self, form: ModifyPasswordForm) -> Union[str, Response]:
+    def form_valid(self, form: ModifyDevicePasswordForm) -> Union[str, Response]:
 
         self.success_url = self.failure_url = flask.url_for('user.timeflip')
 
@@ -76,7 +78,33 @@ class ModifyPasswordView(LoginRequiredMixin, FormPostView):
         return super().form_valid(form)
 
 
-blueprint.add_url_rule('/timeflip/modify-passwd', view_func=ModifyPasswordView.as_view('timeflip-modify-pass'))
+blueprint.add_url_rule('/timeflip/modify-passwd', view_func=ModifyDevicePasswordView.as_view('timeflip-modify-pass'))
+
+
+class ModifyDeviceNameView(LoginRequiredMixin, FormPostView):
+    form_class = ModifyDeviceNameForm
+
+    @staticmethod
+    async def set_new_name(client: AsyncClient, name: str):
+        await client.set_name(name)
+
+    def form_valid(self, form: ModifyDeviceNameForm) -> Union[str, Response]:
+        self.success_url = self.failure_url = flask.url_for('user.timeflip')
+
+        # change in TimeFlip
+        run_coro(self.set_new_name, name=form.name.data)
+
+        # change in db
+        user = flask_login.current_user
+        user.name = form.name.data
+        db.session.add(user)
+        db.session.commit()
+
+        flask.flash('TimeFlip name changed!')
+        return super().form_valid(form)
+
+
+blueprint.add_url_rule('/timeflip/modify-name', view_func=ModifyDeviceNameView.as_view('timeflip-modify-name'))
 
 
 # --- Tasks
