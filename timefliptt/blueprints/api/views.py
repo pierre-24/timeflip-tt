@@ -6,7 +6,7 @@ from bleak import BleakScanner, BleakClient, BleakError
 from asyncio import TimeoutError
 from pytimefliplib.async_client import CHARACTERISTICS
 
-from timefliptt.app import timeflip_daemon
+from timefliptt.timeflip import run_coro
 from timefliptt.blueprints.base_models import User
 from timefliptt.blueprints.base_views import LoginRequiredMixin
 
@@ -55,7 +55,7 @@ class StatusView(LoginRequiredMixin, MethodView):
 
     async def get(self) -> Response:
         try:
-            return jsonify(**timeflip_daemon.run_coro(self.get_info))
+            return jsonify(**run_coro(self.get_info))
         except TimeFlipRuntimeError as e:
             return jsonify(**{
                 'status': 'error',

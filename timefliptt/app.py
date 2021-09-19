@@ -8,18 +8,18 @@ from flask_login import LoginManager
 
 import timefliptt
 from timefliptt.config import Config
-from timefliptt.timeflip import TimeFlipDaemon
+from timefliptt.timeflip import daemon_start, daemon_stop
 
 
 db = SQLAlchemy()
 login_manager = LoginManager()
-timeflip_daemon = TimeFlipDaemon()
 
 
 @login_manager.user_loader
 def load_user(user_id):
     from timefliptt.blueprints.base_models import User
-    return User.query.get(user_id)
+    user = User.query.get(user_id)
+    return user
 
 
 def create_app(config: Config) -> Flask:
@@ -64,7 +64,7 @@ def init_app():
 
 
 def stop_app():
-    timeflip_daemon.stop()
+    daemon_stop()
 
 
 def main():
@@ -82,7 +82,7 @@ def main():
     @app.before_first_request
     def setup_thread():
         atexit.register(stop_app)
-        timeflip_daemon.start()
+        daemon_start()
 
     if not args.init:  # run webserver
         app.run()

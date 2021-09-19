@@ -4,84 +4,162 @@ from bleak import BleakError
 
 from typing import Callable, Coroutine, Any
 
-from pytimefliplib.async_client import AsyncClient, TimeFlipRuntimeError
+from pytimefliplib.async_client import AsyncClient, TimeFlipRuntimeError, NotConnectedError
 
 
 class CoroutineError(Exception):
     pass
 
 
-client: AsyncClient = None
-loop: asyncio.AbstractEventLoop = None
-thread: Thread = None
-lock = Lock()
-connected_and_setup = False
+_client: AsyncClient = None
+_loop: asyncio.AbstractEventLoop = None
+_thread: Thread = None
+_lock = Lock()
+
+_timeflip_address = ''
+_timeflip_password = ''
 
 
-class TimeFlipDaemon:
-    """Daemon to run things on a connected TimeFlip
+class DaemonStopped(Exception):
+    def __init__(self):
+        super().__init__('Daemon is currently stopped!')
+
+
+def daemon_start():
+    """Setup and start daemon
     """
 
-    def __init__(self):
-        pass
+    global _loop, _thread
 
-    @staticmethod
-    def _start_loop(loop: asyncio.AbstractEventLoop):
+    def _start_loop(loop):
         asyncio.set_event_loop(loop)
         loop.run_forever()
 
-    def start(self):
-        global loop, thread
+    _loop = asyncio.new_event_loop()
+    _thread = Thread(target=_start_loop, args=(_loop,), daemon=True)
+    _thread.start()
 
-        loop = asyncio.new_event_loop()
-        thread = Thread(target=TimeFlipDaemon._start_loop, args=(loop, ), daemon=True)
-        thread.start()
 
-    def connect_and_setup(self, address: str, password: str):
-        global client, lock, connected_and_setup
+def daemon_stop():
+    global _thread, _loop, _lock
 
-        with lock:
-            client = AsyncClient(address)
-            self._run_coro(self._coro_connect_and_setup, password=password)
-            connected_and_setup = True
+    hard_logout()
 
-    def logout(self):
-        global lock, connected_and_setup
+    with _lock:
+        if _loop is not None:
+            _loop.call_soon_threadsafe(_loop.stop)
+            _thread.join()
+            _loop = None
+            _thread = None
 
-        with lock:
-            if connected_and_setup:
-                self._run_coro(self._coro_disconnect)
-                connected_and_setup = False
 
-    def run_coro(self, coro: Callable[[AsyncClient, Any], Coroutine], **kwargs) -> Any:
-        global lock
+def soft_connect(address: str, password: str):
+    """Setup everything so that it will connect at next request
+    """
 
-        with lock:
-            return self._run_coro(coro, **kwargs)
+    global _lock, _timeflip_address, _timeflip_password, _loop
 
-    def stop(self):
-        global thread, loop, lock
+    with _lock:
+        if _loop is None:
+            raise DaemonStopped()
 
-        self.logout()
+        _timeflip_address = address
+        _timeflip_password = password
 
-        with lock:
-            loop.call_soon_threadsafe(loop.stop)
-            thread.join()
 
-    def _run_coro(self, coro: Callable[[AsyncClient, Any], Coroutine], **kwargs) -> Any:
-        global client, loop
+def hard_connect(address: str, password: str) -> bool:
+    """Force a connexion
+    """
 
-        try:
-            task = asyncio.run_coroutine_threadsafe(coro(client, **kwargs), loop)
-            return task.result()
-        except asyncio.exceptions.TimeoutError as e:
-            raise TimeFlipRuntimeError(e)
-        except BleakError as e:
-            raise TimeFlipRuntimeError(e)
+    global _lock, _client, _loop
 
-    async def _coro_connect_and_setup(self, client: AsyncClient, password: str):
+    soft_connect(address, password)
+    return _connect()
+
+
+def _connect() -> bool:
+
+    global _lock, _loop, _client, _timeflip_address, _timeflip_password
+
+    async def _connect_and_setup(client: AsyncClient, passwd: str):
         await client.connect()
-        await client.setup(password=password)
+        await client.setup(password=passwd)
 
-    async def _coro_disconnect(self, client: AsyncClient):
-        await client.disconnect()
+    with _lock:
+        if _loop is None:
+            raise DaemonStopped()
+
+        if _timeflip_address != '' and _timeflip_password != '':
+            _client = AsyncClient(_timeflip_address)
+            _run_coro(_connect_and_setup, passwd=_timeflip_password)
+            return True
+
+    return False
+
+
+def try_reconnect() -> bool:
+    """Attempt reconnect, if allowed"""
+
+    return _connect()
+
+
+def hard_logout():
+    """Force logout
+    """
+
+    global _lock, _client, _loop, _timeflip_address, _timeflip_password
+
+    async def _disconnect(client: AsyncClient):
+        try:
+            await client.disconnect()
+        except NotConnectedError:
+            pass  # oh ... well ;)
+
+    with _lock:
+        if _loop is None:
+            raise DaemonStopped()
+
+        _timeflip_address = ''
+        _timeflip_password = ''
+
+        if _client is not None:
+            _run_coro(_disconnect)
+            _client = None
+
+
+def _run_coro(coro: Callable[[AsyncClient, Any], Coroutine], **kwargs) -> Any:
+    """Actually run the corountine (without any check!!)
+    """
+
+    global _client, _loop
+
+    try:
+        task = asyncio.run_coroutine_threadsafe(coro(_client, **kwargs), _loop)
+        return task.result()
+    except asyncio.exceptions.TimeoutError as e:
+        raise TimeFlipRuntimeError(e)
+
+
+def run_coro(coro: Callable[[AsyncClient, Any], Coroutine], retry: int = 1, **kwargs) -> Any:
+    global _lock, _loop, _client, _timeflip_address
+
+    attempts = retry + 1
+
+    for attempt in range(attempts):
+        try:
+            with _lock:
+                if _loop is None:
+                    raise DaemonStopped()
+
+                if _client is None:
+                    raise NotConnectedError()
+
+                return _run_coro(coro, **kwargs)
+        except (NotConnectedError, BleakError) as e:
+            if attempt < retry:
+                try_reconnect()
+            else:
+                if type(e) is BleakError:
+                    raise TimeFlipRuntimeError(e)
+                else:
+                    raise e

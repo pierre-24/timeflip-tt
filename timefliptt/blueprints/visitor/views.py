@@ -8,7 +8,8 @@ from typing import Union
 
 from pytimefliplib.async_client import TimeFlipRuntimeError
 
-from timefliptt.app import db, timeflip_daemon
+from timefliptt.app import db
+from timefliptt.timeflip import hard_connect, hard_logout
 from timefliptt.blueprints.base_views import FormView
 from timefliptt.blueprints.base_models import User
 from timefliptt.blueprints.visitor.forms import LoginForm, AddDeviceForm
@@ -55,10 +56,13 @@ class LoginView(FormView):
 
         if flask.current_app.config.get('WITH_TIMEFLIP', False):
             try:
-                timeflip_daemon.connect_and_setup(form.address.data, form.password.data)
+                hard_connect(form.address.data, form.password.data)
+                flask.flash('You are now connected to the app as well as the TimeFlip.')
             except TimeFlipRuntimeError as e:
                 flask.flash(
                     'Error while trying to reach device (some function may not be available): {}'.format(e), 'error')
+        else:
+            flask.flash('You are now connected.')
 
         self.success_url = flask.url_for('user.graphs')
         if form.next.data:
@@ -79,7 +83,7 @@ def logout():
     flask_login.logout_user()
 
     if flask.current_app.config.get('WITH_TIMEFLIP', False):
-        timeflip_daemon.logout()
+        hard_logout()
 
     flask.flash('You are now disconnected.')
     return flask.redirect(flask.url_for('visitor.login'))
