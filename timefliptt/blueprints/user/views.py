@@ -1,20 +1,15 @@
 import flask
 import sqlalchemy.exc
 from flask import Blueprint, Response
-from flask_login import login_required
 
 from typing import Union
 
 from timefliptt.app import db
 from timefliptt.blueprints.base_models import Category, Task
-from timefliptt.blueprints.base_views import RenderTemplateView, FormPostView, DeleteObjectView
+from timefliptt.blueprints.base_views import RenderTemplateView, FormPostView, DeleteObjectView, LoginRequiredMixin
 from timefliptt.blueprints.user.forms import TaskForm, CategoryForm
 
 blueprint = Blueprint('user', __name__)
-
-
-class LoginRequiredMixin:
-    decorators = [login_required]
 
 
 class GraphsView(LoginRequiredMixin, RenderTemplateView):

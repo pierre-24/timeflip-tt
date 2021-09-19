@@ -1,4 +1,5 @@
 import argparse
+import atexit
 
 from flask import Flask
 from flask_bootstrap import Bootstrap
@@ -7,9 +8,12 @@ from flask_login import LoginManager
 
 import timefliptt
 from timefliptt.config import Config
+from timefliptt.timeflip import TimeFlipDaemon
+
 
 db = SQLAlchemy()
 login_manager = LoginManager()
+timeflip_daemon = TimeFlipDaemon()
 
 
 @login_manager.user_loader
@@ -59,6 +63,10 @@ def init_app():
     db.create_all()
 
 
+def stop_app():
+    timeflip_daemon.stop()
+
+
 def main():
     # get args
     args = get_arguments_parser().parse_args()
@@ -70,6 +78,11 @@ def main():
 
     # create app
     app = create_app(config)
+
+    @app.before_first_request
+    def setup_thread():
+        atexit.register(stop_app)
+        timeflip_daemon.start()
 
     if not args.init:  # run webserver
         app.run()

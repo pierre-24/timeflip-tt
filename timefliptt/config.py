@@ -16,6 +16,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     DB_FILE = 'timeflip-tt.sqlite'
     SECRET_KEY = '_wH@t3v3R'
+    WITH_TIMEFLIP = True
 
     # App info
     APP_INFO = {

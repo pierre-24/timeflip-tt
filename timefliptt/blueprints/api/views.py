@@ -1,4 +1,4 @@
-from flask import Blueprint, Response, jsonify, current_app
+from flask import Blueprint, Response, jsonify
 from flask.views import MethodView
 from pytimefliplib.async_client import AsyncClient, TimeFlipRuntimeError
 
@@ -6,8 +6,9 @@ from bleak import BleakScanner, BleakClient, BleakError
 from asyncio import TimeoutError
 from pytimefliplib.async_client import CHARACTERISTICS
 
-from timefliptt.timeflip import run_coroutine_on_timeflip, CoroutineError
+from timefliptt.app import timeflip_daemon
 from timefliptt.blueprints.base_models import User
+from timefliptt.blueprints.base_views import LoginRequiredMixin
 
 blueprint = Blueprint('api', __name__)
 
@@ -40,12 +41,11 @@ class ListAvailableDevices(MethodView):
 blueprint.add_url_rule('/api/discover', view_func=ListAvailableDevices.as_view('discover'))
 
 
-class StatusView(MethodView):
+class StatusView(LoginRequiredMixin, MethodView):
     @staticmethod
-    async def get_info(client: AsyncClient, config: dict) -> dict:
+    async def get_info(client: AsyncClient) -> dict:
         return {
             'status': 'ok',
-            'address': config['address'],
             'name': await client.device_name(),
             'facet': client.current_facet_value,
             'battery': await client.battery_level(),
@@ -55,10 +55,9 @@ class StatusView(MethodView):
 
     async def get(self) -> Response:
         try:
-            return jsonify(**await run_coroutine_on_timeflip(self.get_info, full_setup=True))
-        except (CoroutineError, TimeFlipRuntimeError) as e:
+            return jsonify(**timeflip_daemon.run_coro(self.get_info))
+        except TimeFlipRuntimeError as e:
             return jsonify(**{
-                'address': current_app.config['TIMEFLIP']['address'],
                 'status': 'error',
                 'msg': str(e)
             })

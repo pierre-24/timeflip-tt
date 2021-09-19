@@ -319,5 +319,5 @@ class TaskTestCase(FlaskTestCase):
         }, follow_redirects=False)
         self.assertEqual(response.status_code, 302)
 
-        self.assertEqual(self.num_task , Task.query.count())
+        self.assertEqual(self.num_task, Task.query.count())
         self.assertIsNotNone(Task.query.get(self.task_1_1.id))

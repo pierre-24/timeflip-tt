@@ -6,7 +6,9 @@ from is_safe_url import is_safe_url
 
 from typing import Union
 
-from timefliptt.app import db
+from pytimefliplib.async_client import TimeFlipRuntimeError
+
+from timefliptt.app import db, timeflip_daemon
 from timefliptt.blueprints.base_views import FormView
 from timefliptt.blueprints.base_models import User
 from timefliptt.blueprints.visitor.forms import LoginForm, AddDeviceForm
@@ -51,6 +53,13 @@ class LoginView(FormView):
 
         flask_login.login_user(user[0])
 
+        if flask.current_app.config.get('WITH_TIMEFLIP', False):
+            try:
+                timeflip_daemon.connect_and_setup(form.address.data, form.password.data)
+            except TimeFlipRuntimeError as e:
+                flask.flash(
+                    'Error while trying to reach device (some function may not be available): {}'.format(e), 'error')
+
         self.success_url = flask.url_for('user.graphs')
         if form.next.data:
             if is_safe_url(form.next.data, {}):
@@ -68,6 +77,10 @@ blueprint.add_url_rule('/', view_func=LoginView.as_view('login'))
 @blueprint.route('/logout', endpoint='logout')
 def logout():
     flask_login.logout_user()
+
+    if flask.current_app.config.get('WITH_TIMEFLIP', False):
+        timeflip_daemon.logout()
+
     flask.flash('You are now disconnected.')
     return flask.redirect(flask.url_for('visitor.login'))
 
