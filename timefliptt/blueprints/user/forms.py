@@ -29,3 +29,14 @@ class TaskForm(FlaskForm):
     color = f.StringField(validators=[is_valid_hex_color], widget=ColorInput())
 
     submit = f.SubmitField('Submit')
+
+
+class ModifyPasswordForm(FlaskForm):
+    old_password = f.PasswordField('Old password', validators=[f.validators.InputRequired(), f.validators.Length(6)])
+
+    password = f.PasswordField(
+        'New password', validators=[f.validators.InputRequired(), f.validators.Length(6)])
+    repeat_password = f.PasswordField(
+        'Repeat new password', validators=[f.validators.InputRequired(), f.validators.Length(6)])
+
+    submit = f.SubmitField('Submit')

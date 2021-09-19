@@ -1,0 +1,38 @@
+{% extends "base.in.html" %}
+{% from 'bootstrap/form.html' import render_form_row, render_field %}
+{% from 'helpers.in.html' import create_modal %}
+{% set active_menu = 'timeflip' %}
+
+{% block page_title %}TimeFlip{% endblock %}
+
+{% block content %}
+    <h1>TimeFlip</h1>
+
+    <p>
+        <a class="btn btn-secondary" href="#modalPassword" data-toggle="modal">Change password</a>
+    </p>
+
+    {# Category modal #}
+    {% set modal_create_content %}
+        {{ form_modify_passwd.hidden_tag() }}
+        {{ render_field(form_modify_passwd.old_password) }}
+        {{ render_form_row([form_modify_passwd.password, form_modify_passwd.repeat_password]) }}
+    {% endset %}
+    {{ create_modal(
+        'modalPassword',
+        'Change password',
+        modal_create_content,
+        render_field(form_modify_passwd.submit),
+        action=url_for('user.timeflip-modify-pass')
+        ) }}
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+
+    <script>
+        "use strict";
+
+        // setup_modals([]);
+    </script>
+{% endblock %}

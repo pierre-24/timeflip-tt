@@ -4,19 +4,53 @@ from flask import Blueprint, Response
 
 from typing import Union
 
+import flask_login
+
 from timefliptt.app import db
 from timefliptt.blueprints.base_models import Category, Task
 from timefliptt.blueprints.base_views import RenderTemplateView, FormPostView, DeleteObjectView, LoginRequiredMixin
-from timefliptt.blueprints.user.forms import TaskForm, CategoryForm
+from timefliptt.blueprints.user.forms import TaskForm, CategoryForm, ModifyPasswordForm
 
 blueprint = Blueprint('user', __name__)
 
 
+# --- Graphs
 class GraphsView(LoginRequiredMixin, RenderTemplateView):
     template_name = 'user/graphs.html'
 
 
 blueprint.add_url_rule('/graphs', view_func=GraphsView.as_view('graphs'))
+
+
+# --- Timeflip
+class TimeflipView(LoginRequiredMixin, RenderTemplateView):
+    template_name = 'user/timeflip.html'
+
+    def get_context_data(self, *args, **kwargs) -> dict:
+        ctx = super().get_context_data(*args, **kwargs)
+
+        ctx['form_modify_passwd'] = ModifyPasswordForm()
+
+        return ctx
+
+
+blueprint.add_url_rule('/timeflip', view_func=TimeflipView.as_view('timeflip'))
+
+
+class ModifyPasswordView(LoginRequiredMixin, FormPostView):
+    form_class = ModifyPasswordForm
+
+    def form_valid(self, form: ModifyPasswordForm) -> Union[str, Response]:
+
+        if not flask_login.current_user.is_correct_password(form.old_password):
+            form.old_password.errors.append('Incorrect password')
+            return self.form_invalid(form)
+
+        self.success_url = flask.url_for('user.timeflip')
+        return super().form_valid(form)
+
+
+blueprint.add_url_rule('/timeflip/modify-passwd', view_func=TimeflipView.as_view('timeflip-modify-pass'))
 
 
 # --- Tasks
