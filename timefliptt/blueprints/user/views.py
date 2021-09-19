@@ -6,8 +6,11 @@ from typing import Union
 
 import flask_login
 
+from pytimefliplib.async_client import AsyncClient
+
 from timefliptt.app import db
-from timefliptt.blueprints.base_models import Category, Task
+from timefliptt.timeflip import run_coro, soft_connect
+from timefliptt.blueprints.base_models import Category, Task, User
 from timefliptt.blueprints.base_views import RenderTemplateView, FormPostView, DeleteObjectView, LoginRequiredMixin
 from timefliptt.blueprints.user.forms import TaskForm, CategoryForm, ModifyPasswordForm
 
@@ -40,17 +43,40 @@ blueprint.add_url_rule('/timeflip', view_func=TimeflipView.as_view('timeflip'))
 class ModifyPasswordView(LoginRequiredMixin, FormPostView):
     form_class = ModifyPasswordForm
 
+    @staticmethod
+    async def set_new_password(client: AsyncClient, password: str):
+        await client.set_password(password)
+
     def form_valid(self, form: ModifyPasswordForm) -> Union[str, Response]:
 
-        if not flask_login.current_user.is_correct_password(form.old_password):
-            form.old_password.errors.append('Incorrect password')
+        self.success_url = self.failure_url = flask.url_for('user.timeflip')
+
+        if not flask_login.current_user.is_correct_password(form.old_password.data):
+            form.old_password.errors.append('Incorrect old password')
             return self.form_invalid(form)
 
-        self.success_url = flask.url_for('user.timeflip')
+        if form.password.data != form.repeat_password.data:
+            form.repeat_password.errors.append('The two passwords does not match')
+            return self.form_invalid(form)
+
+        # change in timeflip
+        run_coro(self.set_new_password, password=form.password.data)
+
+        # change in db
+        user = flask_login.current_user
+        user.password_hash = User.hash_pass(form.password.data)
+        db.session.add(user)
+        db.session.commit()
+
+        # change in session
+        flask.session['password'] = form.password.data
+        soft_connect(user.device_address, form.password.data)
+
+        flask.flash('TimeFlip password changed!')
         return super().form_valid(form)
 
 
-blueprint.add_url_rule('/timeflip/modify-passwd', view_func=TimeflipView.as_view('timeflip-modify-pass'))
+blueprint.add_url_rule('/timeflip/modify-passwd', view_func=ModifyPasswordView.as_view('timeflip-modify-pass'))
 
 
 # --- Tasks
@@ -96,6 +122,8 @@ class TaskEditView(LoginRequiredMixin, FormPostView):
         return form
 
     def form_valid(self, form: TaskForm) -> Union[str, Response]:
+        self.success_url = self.failure_url = flask.url_for('user.tasks')
+
         # get category
         try:
             category = Category.query.get(form.category.data)
@@ -121,7 +149,6 @@ class TaskEditView(LoginRequiredMixin, FormPostView):
         db.session.add(task)
         db.session.commit()
 
-        self.success_url = flask.url_for('user.tasks')
         return super().form_valid(form)
 
 
@@ -129,9 +156,11 @@ blueprint.add_url_rule('/tasks/edit-task', view_func=TaskEditView.as_view('task-
 
 
 class TaskDeleteView(LoginRequiredMixin, DeleteObjectView):
-    success_url = 'user.tasks'
     object_class = Task
     kwarg_var = 'task_delete_id'
+
+    def post_deletion(self, obj):
+        self.success_url = flask.url_for('user.tasks')
 
 
 blueprint.add_url_rule('/tasks/delete-task', view_func=TaskDeleteView.as_view('task-delete'))
@@ -141,6 +170,7 @@ class CategoryEditView(LoginRequiredMixin, FormPostView):
     form_class = CategoryForm
 
     def form_valid(self, form: CategoryForm) -> Union[str, Response]:
+        self.success_url = self.failure_url = flask.url_for('user.tasks')
 
         if form.category_id.data < 0:  # create new
             category = Category.create(form.category_name.data)
@@ -156,7 +186,6 @@ class CategoryEditView(LoginRequiredMixin, FormPostView):
         db.session.add(category)
         db.session.commit()
 
-        self.success_url = flask.url_for('user.tasks')
         return super().form_valid(form)
 
 
@@ -164,7 +193,6 @@ blueprint.add_url_rule('/tasks/edit-category', view_func=CategoryEditView.as_vie
 
 
 class CategoryDeleteView(LoginRequiredMixin, DeleteObjectView):
-    success_url = 'user.tasks'
     object_class = Category
     kwarg_var = 'category_delete_id'
 
@@ -179,6 +207,8 @@ class CategoryDeleteView(LoginRequiredMixin, DeleteObjectView):
                 db.session.delete(task)
 
             db.session.commit()
+
+        self.success_url = flask.url_for('user.tasks')
 
 
 blueprint.add_url_rule('/tasks/delete-category', view_func=CategoryDeleteView.as_view('category-delete'))

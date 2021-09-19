@@ -82,7 +82,7 @@ class FormPostView(MethodView):
             if len(element.errors) > 0:
                 errors.extend(element.errors)
 
-        flask.flash('Error while treating form: {}'.format(', '.join(errors)))
+        flask.flash('Error while treating form: {}'.format(', '.join(errors)), 'error')
         return flask.redirect(self.failure_url)
 
 
@@ -133,7 +133,7 @@ class DeleteView(MethodView):
 
         self.post_deletion(obj)
 
-        return flask.redirect(flask.url_for(self.success_url))
+        return flask.redirect(self.success_url)
 
     def post(self, *args, **kwargs):
         return self.delete(*args, **kwargs)
