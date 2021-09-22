@@ -1,25 +1,26 @@
-from flask import Blueprint, Response, jsonify
-from flask.views import MethodView
+import asyncio
+
+from flask import Response, jsonify
+from flask_restful import Resource
 from pytimefliplib.async_client import AsyncClient, TimeFlipRuntimeError
 
 from bleak import BleakScanner, BleakClient, BleakError
 from asyncio import TimeoutError
 from pytimefliplib.async_client import CHARACTERISTICS
 
+from timefliptt.blueprints.api.views import blueprint
 from timefliptt.timeflip import run_coro
 from timefliptt.blueprints.base_models import User
 from timefliptt.blueprints.base_views import LoginRequiredMixin
 
-blueprint = Blueprint('api', __name__)
 
-
-class ListAvailableDevices(MethodView):
+class ListAvailableDevices(Resource):
     """List the available TimeFlip devices
 
     Inspired by
     https://github.com/pierre-24/pytimefliplib/blob/b4ceda/pytimefliplib/scripts/discover.py#L11
     """
-    async def get(self) -> Response:
+    async def get_devices(self) -> Response:
         avail_timeflip = []
 
         devices = await BleakScanner.discover()
@@ -34,14 +35,23 @@ class ListAvailableDevices(MethodView):
         user_addresses = [u.device_address for u in User.query.all()]
 
         return jsonify(discovered=[
-            {'address': d.address, 'name': d.name, 'pairable': d.address not in user_addresses} for d in avail_timeflip
+            {
+                'address': d.address,
+                'name': d.name,
+                'already_paired': d.address in user_addresses
+            } for d in avail_timeflip
         ])
 
+    def get(self):
+        loop = asyncio.new_event_loop()
+        loop.run_forever()
+        return asyncio.run_coroutine_threadsafe(self.get_devices(), loop).result()
 
-blueprint.add_url_rule('/api/discover', view_func=ListAvailableDevices.as_view('discover'))
+
+blueprint.add_url_rule('/api/timeflip/discover', view_func=ListAvailableDevices.as_view('timeflip-discover'))
 
 
-class StatusView(LoginRequiredMixin, MethodView):
+class StatusView(LoginRequiredMixin, Resource):
     @staticmethod
     async def get_info(client: AsyncClient) -> dict:
         return {
@@ -53,7 +63,7 @@ class StatusView(LoginRequiredMixin, MethodView):
             'locked': client.locked
         }
 
-    async def get(self) -> Response:
+    def get(self) -> Response:
         try:
             return jsonify(**run_coro(self.get_info))
         except TimeFlipRuntimeError as e:
@@ -63,4 +73,4 @@ class StatusView(LoginRequiredMixin, MethodView):
             })
 
 
-blueprint.add_url_rule('/api/status', view_func=StatusView.as_view('status'))
+blueprint.add_url_rule('/api/timeflip/status', view_func=StatusView.as_view('timeflip-status'))

@@ -3,9 +3,10 @@ pyyaml
 flake8
 flake8-quotes
 autopep8
-flask[async] @ git+https://github.com/pallets/flask.git@6f852d
+flask
 Flask-WTF
 bootstrap-flask
 Flask-SQLAlchemy
 flask-login
 is-safe-url
+flask-restful

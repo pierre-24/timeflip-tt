@@ -4,8 +4,8 @@
 #
 #    pip-compile requirements.in
 #
-asgiref==3.4.1
-    # via flask
+aniso8601==9.0.1
+    # via flask-restful
 autopep8==1.5.7
     # via -r requirements.in
 bleak==0.12.1
@@ -22,14 +22,17 @@ flake8==3.9.2
     #   flake8-quotes
 flake8-quotes==3.3.0
     # via -r requirements.in
-git+https://github.com/pallets/flask.git@6f852d
+flask==2.0.1
     # via
     #   -r requirements.in
     #   bootstrap-flask
     #   flask-login
+    #   flask-restful
     #   flask-sqlalchemy
     #   flask-wtf
 flask-login==0.5.0
+    # via -r requirements.in
+flask-restful==0.3.9
     # via -r requirements.in
 flask-sqlalchemy==2.5.1
     # via -r requirements.in
@@ -59,8 +62,12 @@ pyflakes==2.3.1
     # via flake8
 git+https://github.com/pierre-24/pytimefliplib.git
     # via -r requirements.in
+pytz==2021.1
+    # via flask-restful
 pyyaml==5.4.1
     # via -r requirements.in
+six==1.16.0
+    # via flask-restful
 sqlalchemy==1.4.23
     # via flask-sqlalchemy
 toml==0.10.2
