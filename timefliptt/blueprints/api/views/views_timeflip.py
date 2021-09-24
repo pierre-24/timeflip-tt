@@ -1,5 +1,7 @@
 import asyncio
 
+from typing import List
+
 from flask import Response, jsonify
 from flask_restful import Resource
 from pytimefliplib.async_client import AsyncClient, TimeFlipRuntimeError
@@ -20,7 +22,7 @@ class ListAvailableDevices(Resource):
     Inspired by
     https://github.com/pierre-24/pytimefliplib/blob/b4ceda/pytimefliplib/scripts/discover.py#L11
     """
-    async def get_devices(self) -> Response:
+    async def get_devices(self) -> List[dict]:
         avail_timeflip = []
 
         devices = await BleakScanner.discover()
@@ -34,18 +36,20 @@ class ListAvailableDevices(Resource):
 
         user_addresses = [u.device_address for u in User.query.all()]
 
-        return jsonify(discovered=[
+        return [
             {
                 'address': d.address,
                 'name': d.name,
                 'already_paired': d.address in user_addresses
             } for d in avail_timeflip
-        ])
+        ]
 
     def get(self):
         loop = asyncio.new_event_loop()
-        loop.run_forever()
-        return asyncio.run_coroutine_threadsafe(self.get_devices(), loop).result()
+        t = loop.create_task(self.get_devices())
+        available_devices = loop.run_until_complete(t)
+        loop.close()
+        return jsonify(discovered=available_devices)
 
 
 blueprint.add_url_rule('/api/timeflip/discover', view_func=ListAvailableDevices.as_view('timeflip-discover'))
