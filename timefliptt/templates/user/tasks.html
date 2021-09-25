@@ -8,51 +8,6 @@
 {% block content %}
     <h1>Tasks</h1>
 
-    <p>
-        <a class="btn btn-secondary" href="#modalCategory" data-toggle="modal">+ New category</a>
-    </p>
-
-    {# Category modal #}
-    {% set modal_create_content %}
-        {{ form_category.hidden_tag() }}
-        {{ render_field(form_category.category_name) }}
-    {% endset %}
-    {{ create_modal(
-        'modalCategory',
-        'Category',
-        modal_create_content,
-        render_field(form_category.submit),
-        action=url_for('user.category-edit')
-        ) }}
-
-    {# Task delete modal #}
-    {{ create_delete_modal(
-        'category_delete',
-        'Delete category',
-        action=url_for('user.category-delete')
-    ) }}
-
-    {# Task modal #}
-    {% set modal_create_content %}
-        {{ form_task.hidden_tag() }}
-        {{ render_form_row([form_task.category]) }}
-        {{ render_form_row([form_task.task_name, form_task.color]) }}
-    {% endset %}
-    {{ create_modal(
-        'modalTask',
-        'Task',
-        modal_create_content,
-        render_field(form_task.submit),
-        action=url_for('user.task-edit')
-        ) }}
-
-    {# Task delete modal #}
-    {{ create_delete_modal(
-        'task_delete',
-        'Delete task',
-        action=url_for('user.task-delete')
-    ) }}
-
     <div class="row">
     {% for category_id in categories %}
         <div class="col-sm-6">
@@ -60,16 +15,6 @@
                 <div class="card-body">
                     <h5 class="card-title d-flex justify-content-between">
                         {{ categories[category_id].name }}
-
-                        <div class="dropdown">
-                          <a href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="category-dropdown">
-                             &middot;&middot;&middot;
-                          </a>
-                          <div class="dropdown-menu">
-                            <a href="#" class="dropdown-item categoryEditLink" data-id="{{ category_id }}" data-name="{{ categories[category_id].name }}">Edit</a>
-                            <a href="#" class="dropdown-item categoryDeleteLink" data-id="{{ category_id }}" data-placeholder="Remove category <b>{{ categories[category_id].name }}</b> and all its tasks?">Remove</a>
-                          </div>
-                        </div>
                     </h5>
 
                     <p class="task-pills">
@@ -78,69 +23,14 @@
                                 <span class="task-pill">
                                     <span class="task-color" style="background: {{ task.color }}"></span>
                                     {{ task.name }}
-
-                                    <a class="taskEditLink" href="#" data-category-id="{{ category_id }}" data-id="{{ task.id }}" data-name="{{ task.name }}" data-color="{{ task.color }}">e</a>
-                                    <a class="taskDeleteLink" href="#" data-id="{{ task.id }}" data-placeholder="Delete task <b>{{ task.name }}</b>?">&times;</a>
                                 </span>
                             {% endfor %}
                         {% endif %}
                     </p>
-                </div>
-                <div class="card-footer">
-                    <a class="btn btn-secondary taskCreateLink" href="#" data-category-id="{{ category_id }}">+ new task</a>
                 </div>
             </div>
         </div>
     {% endfor %}
     </div>
 
-{% endblock %}
-
-{% block scripts %}
-    {{ super() }}
-
-    <script>
-        "use strict";
-
-        setup_modals([
-            {
-                class_name: 'categoryEditLink',
-                modal: 'modalCategory',
-                dataset_to_input: {
-                    'category_id': 'id',
-                    'category_name': 'name'
-                }
-            }, {
-                class_name: 'categoryDeleteLink',
-                modal: 'category_delete',
-                dataset_to_input: {
-                    'category_delete_id': 'id',
-                    'category_delete_placeholder': 'placeholder'
-                }
-            }, {
-                class_name: 'taskCreateLink',
-                modal: 'modalTask',
-                dataset_to_input: {
-                    'category': 'id'
-                }
-            }, {
-                class_name: 'taskEditLink',
-                modal: 'modalTask',
-                dataset_to_input: {
-                    'category': 'categoryId',
-                    'task_id': 'id',
-                    'task_name': 'name',
-                    'color': 'color'
-                }
-            }, {
-                class_name: 'taskDeleteLink',
-                modal: 'task_delete',
-                dataset_to_input: {
-                    'task_delete_id': 'id',
-                    'task_delete_placeholder':
-                        'placeholder'
-                }
-            }
-        ]);
-    </script>
 {% endblock %}

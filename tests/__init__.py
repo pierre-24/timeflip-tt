@@ -2,7 +2,6 @@ import tempfile
 from unittest import TestCase
 import os
 
-import flask
 from sqlalchemy.orm import Session
 
 from timefliptt.config import Config
@@ -23,7 +22,6 @@ class FlaskTestCase(TestCase):
         self.app.config['SERVER_NAME'] = '127.0.0.1:5000'
         self.app.config['DEBUG'] = True
         self.app.config['WTF_CSRF_ENABLED'] = False
-        self.app.config['WITH_TIMEFLIP'] = False
 
         # push context
         self.app_context = self.app.app_context()
@@ -47,21 +45,3 @@ class FlaskTestCase(TestCase):
     def tearDown(self):
         os.remove(self.db_file)
         self.app_context.pop()
-
-    def login(self, address, password):
-        """Login client."""
-
-        self.client.post(flask.url_for('visitor.login'), data={
-            'address': address,
-            'password': password
-        }, follow_redirects=False)
-
-        response = self.client.get(flask.url_for('user.graphs'), follow_redirects=False)
-        self.assertEqual(response.status_code, 200)
-
-    def logout(self):
-        """Logout client"""
-        self.client.get(flask.url_for('visitor.logout'), follow_redirects=False)
-
-        response = self.client.get(flask.url_for('user.graphs'), follow_redirects=False)
-        self.assertEqual(response.status_code, 302)
