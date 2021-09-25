@@ -1,6 +1,6 @@
 import re
 
-from marshmallow import ValidationError
+from marshmallow import ValidationError, validate
 from marshmallow_sqlalchemy import SQLAlchemySchemaOpts, SQLAlchemySchema, auto_field
 from marshmallow_sqlalchemy.fields import Nested
 
@@ -68,4 +68,4 @@ class TimeFlipDeviceSchema(BaseSchema):
     id = auto_field(required=True)
     address = auto_field(required=True, validate=validate_mac)
     password = auto_field(required=True)
-    name = auto_field(required=True)
+    name = auto_field(required=True, validate=validate.Length(max=19))
