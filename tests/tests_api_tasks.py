@@ -102,7 +102,10 @@ class CategoriesTestCase(FlaskTestCase):
         self.assertEqual(response.status_code, 200)
 
         self.assertEqual(self.num_category - 1, Category.query.count())
+        self.assertEqual(self.num_task - 1, Task.query.count())
+
         self.assertIsNone(Category.query.get(self.category_1.id))
+        self.assertIsNone(Task.query.get(self.task_1_1.id))  # also delete tasks in category
 
     def test_delete_unknown_category_ko(self):
         self.assertEqual(self.num_category, Category.query.count())
@@ -179,6 +182,20 @@ class TasksTestCase(FlaskTestCase):
 
         self.assertEqual(self.num_task, Task.query.count())
 
+    def test_create_task_wrong_color_ko(self):
+        self.assertEqual(self.num_task, Task.query.count())
+
+        name = 'whatever'
+        color = '#fff'
+
+        response = self.client.post(flask.url_for('api.category', id=self.category_1.id), json={
+            'name': name,
+            'color': color
+        })
+        self.assertEqual(response.status_code, 422)  # validation error
+
+        self.assertEqual(self.num_task, Task.query.count())
+
     def test_view_task_ok(self):
         self.assertEqual(self.num_task, Task.query.count())
         t = self.task_1_1
@@ -221,6 +238,22 @@ class TasksTestCase(FlaskTestCase):
         self.assertEqual(name, t.name)
         self.assertEqual(color, t.color)
         self.assertEqual(self.category_2.id, t.category_id)
+
+    def test_modify_task_wrong_color_ko(self):
+        self.assertEqual(self.num_task, Task.query.count())
+
+        name = 'whatever'
+        color = '#000'
+
+        response = self.client.put(flask.url_for('api.task', id=self.task_1_1.id), json={
+            'name': name,
+            'color': color,
+            'category': self.category_2.id
+        })
+
+        self.assertEqual(response.status_code, 422)
+        t = Task.query.get(self.task_1_1.id)
+        self.assertNotEqual(t.color, color)
 
     def test_modify_unknown_task_ko(self):
         self.assertEqual(self.num_task, Task.query.count())
