@@ -39,6 +39,8 @@ class User(BaseModel, UserMixin):
 class Category(BaseModel):
     name = db.Column(db.VARCHAR(length=150), nullable=False)
 
+    tasks = db.relationship('Task', back_populates='category')
+
     @classmethod
     def create(cls, name: str) -> 'Category':
         o = cls()
@@ -53,7 +55,7 @@ class Task(BaseModel):
     color = db.Column(db.VARCHAR(length=7), nullable=False)
 
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
-    category = db.relationship('Category', uselist=False)
+    category = db.relationship('Category', uselist=False, back_populates='tasks')
 
     @classmethod
     def create(cls, name: str, category: Union[int, Category], color: str) -> 'Task':

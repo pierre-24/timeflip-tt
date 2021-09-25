@@ -4,8 +4,6 @@
 #
 #    pip-compile requirements.in
 #
-aniso8601==9.0.1
-    # via flask-restful
 autopep8==1.5.7
     # via -r requirements.in
 bleak==0.12.1
@@ -27,12 +25,9 @@ flask==2.0.1
     #   -r requirements.in
     #   bootstrap-flask
     #   flask-login
-    #   flask-restful
     #   flask-sqlalchemy
     #   flask-wtf
 flask-login==0.5.0
-    # via -r requirements.in
-flask-restful==0.3.9
     # via -r requirements.in
 flask-sqlalchemy==2.5.1
     # via -r requirements.in
@@ -52,6 +47,12 @@ markupsafe==2.0.1
     # via
     #   jinja2
     #   wtforms
+marshmallow==3.13.0
+    # via
+    #   marshmallow-sqlalchemy
+    #   webargs
+marshmallow-sqlalchemy==0.26.1
+    # via -r requirements.in
 mccabe==0.6.1
     # via flake8
 pycodestyle==2.7.0
@@ -62,16 +63,16 @@ pyflakes==2.3.1
     # via flake8
 git+https://github.com/pierre-24/pytimefliplib.git
     # via -r requirements.in
-pytz==2021.1
-    # via flask-restful
 pyyaml==5.4.1
     # via -r requirements.in
-six==1.16.0
-    # via flask-restful
 sqlalchemy==1.4.23
-    # via flask-sqlalchemy
+    # via
+    #   flask-sqlalchemy
+    #   marshmallow-sqlalchemy
 toml==0.10.2
     # via autopep8
+webargs==8.0.1
+    # via -r requirements.in
 werkzeug==2.0.1
     # via flask
 wtforms==2.3.3

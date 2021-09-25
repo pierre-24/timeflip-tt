@@ -9,4 +9,5 @@ bootstrap-flask
 Flask-SQLAlchemy
 flask-login
 is-safe-url
-flask-restful
+marshmallow-sqlalchemy
+webargs

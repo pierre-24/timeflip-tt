@@ -3,12 +3,11 @@ import asyncio
 from typing import List
 
 from flask import Response, jsonify
-from flask_restful import Resource
-from pytimefliplib.async_client import AsyncClient, TimeFlipRuntimeError
+from flask.views import MethodView
 
+from pytimefliplib.async_client import AsyncClient, TimeFlipRuntimeError, CHARACTERISTICS
 from bleak import BleakScanner, BleakClient, BleakError
 from asyncio import TimeoutError
-from pytimefliplib.async_client import CHARACTERISTICS
 
 from timefliptt.blueprints.api.views import blueprint
 from timefliptt.timeflip import run_coro
@@ -16,7 +15,7 @@ from timefliptt.blueprints.base_models import User
 from timefliptt.blueprints.base_views import LoginRequiredMixin
 
 
-class ListAvailableDevices(Resource):
+class ListAvailableDevices(MethodView):
     """List the available TimeFlip devices
 
     Inspired by
@@ -44,7 +43,7 @@ class ListAvailableDevices(Resource):
             } for d in avail_timeflip
         ]
 
-    def get(self):
+    def get(self) -> Response:
         loop = asyncio.new_event_loop()
         t = loop.create_task(self.get_devices())
         available_devices = loop.run_until_complete(t)
@@ -55,7 +54,7 @@ class ListAvailableDevices(Resource):
 blueprint.add_url_rule('/api/timeflip/discover', view_func=ListAvailableDevices.as_view('timeflip-discover'))
 
 
-class StatusView(LoginRequiredMixin, Resource):
+class StatusView(LoginRequiredMixin, MethodView):
     @staticmethod
     async def get_info(client: AsyncClient) -> dict:
         return {
@@ -69,7 +68,7 @@ class StatusView(LoginRequiredMixin, Resource):
 
     def get(self) -> Response:
         try:
-            return jsonify(**run_coro(self.get_info))
+            return run_coro(self.get_info)
         except TimeFlipRuntimeError as e:
             return jsonify(**{
                 'status': 'error',

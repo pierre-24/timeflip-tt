@@ -87,6 +87,16 @@ def main():
         if 'address' in flask.session:
             soft_connect(flask.session['address'], flask.session.get('password', ''))
 
+    # error handling
+    @app.errorhandler(422)
+    def handle_error(err):
+        headers = err.data.get('headers', None)
+        messages = err.data.get('messages', ['Invalid request.'])
+        if headers:
+            return flask.jsonify({'errors': messages}), err.code, headers
+        else:
+            return flask.jsonify({'errors': messages}), err.code
+
     if not args.init:  # run webserver
         app.run()
     else:  # init app
