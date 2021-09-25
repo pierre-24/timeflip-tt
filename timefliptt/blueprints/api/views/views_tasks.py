@@ -3,6 +3,7 @@ from flask import jsonify, Response
 from flask.views import MethodView
 
 from webargs import fields
+from marshmallow import Schema, post_load
 
 from timefliptt.app import db
 from timefliptt.blueprints.api.views import blueprint
@@ -20,7 +21,7 @@ class CategoriesView(MethodView):
 
         return jsonify(categories=CategorySchema(many=True).dump(Category.query.all()))
 
-    @parser.use_kwargs({'name': fields.Str(required=True)}, location='json')
+    @parser.use_kwargs(CategorySchema(exclude=('id', )), location='json')
     def post(self, name: str) -> Response:
         """Create a new category
         """
@@ -37,19 +38,43 @@ blueprint.add_url_rule('/api/categories/', view_func=CategoriesView.as_view('cat
 
 class CategoryView(MethodView):
 
-    @parser.use_kwargs({'id': fields.Int(required='true')}, location='view_args')
-    def get(self, id: int) -> Response:
-        category = Category.query.get(id)
+    class CategorySimpleSchema(Schema):
+        id = fields.Integer(required=True)
+
+        @post_load
+        def make_object(self, data, **kwargs):
+            return Category.query.get(data['id'])
+
+    @parser.use_args(CategorySimpleSchema, location='view_args')
+    def get(self, category: Category, id: int) -> Response:
+        """View an existing category
+        """
 
         if category is not None:
             return jsonify(CategorySchema().dump(category))
         else:
             flask.abort(404)
 
-    @parser.use_kwargs({'id': fields.Int(required='true')}, location='view_args')
+    @parser.use_args(CategorySimpleSchema, location='view_args')
+    @parser.use_kwargs(TaskSchema(exclude=('id', 'category')), location='json')
+    def post(self, category: Category, id: int, name: str, color: str) -> Response:
+        """Create a new task in this category
+        """
+
+        if category is None:
+            flask.abort(404)
+
+        task = Task.create(name, category, color)
+        db.session.add(task)
+        db.session.commit()
+
+        return jsonify(TaskSchema().dump(task))
+
+    @parser.use_args(CategorySimpleSchema, location='view_args')
     @parser.use_kwargs({'name': fields.Str(required=True)}, location='json')
-    def put(self, id: int, name: str) -> Response:
-        category = Category.query.get(id)
+    def put(self, category: Category, id: int, name: str) -> Response:
+        """Modify an existing category
+        """
 
         if category is not None:
             category.name = name
@@ -61,10 +86,10 @@ class CategoryView(MethodView):
         else:
             flask.abort(404)
 
-    @parser.use_kwargs({'id': fields.Int(required='true')}, location='view_args')
-    def delete(self, id: int) -> Response:
-        category = Category.query.get(id)
-
+    @parser.use_args(CategorySimpleSchema, location='view_args')
+    def delete(self, category: Category, id: int) -> Response:
+        """Delete an existing category
+        """
         if category is not None:
             db.session.delete(category)
             db.session.commit()
@@ -82,3 +107,56 @@ class TasksView(MethodView):
 
 
 blueprint.add_url_rule('/api/tasks/', view_func=TasksView.as_view('tasks'))
+
+
+class TaskView(MethodView):
+
+    class TaskSimpleSchema(Schema):
+        id = fields.Integer(required=True)
+
+        @post_load
+        def make_object(self, data, **kwargs):
+            return Task.query.get(data['id'])
+
+    @parser.use_args(TaskSimpleSchema, location='view_args')
+    def get(self, task: Task, id: int) -> Response:
+        """View an existing task
+        """
+
+        if task is not None:
+            return jsonify(TaskSchema().dump(task))
+        else:
+            flask.abort(404)
+
+    @parser.use_args(TaskSimpleSchema, location='view_args')
+    @parser.use_kwargs(TaskSchema(exclude=('id', )), location='json')
+    def put(self, task: Task, id: int, name: str, color: str, category_id: int) -> Response:
+        """Modify an existing task
+        """
+
+        if task is not None:
+            task.name = name
+            task.color = color
+            task.category_id = category_id
+
+            db.session.add(task)
+            db.session.commit()
+
+            return jsonify(TaskSchema().dump(task))
+        else:
+            flask.abort(404)
+
+    @parser.use_args(TaskSimpleSchema, location='view_args')
+    def delete(self, task: Task, id: int) -> Response:
+        """Delete an existing taskk
+        """
+
+        if task is not None:
+            db.session.delete(task)
+            db.session.commit()
+            return jsonify(status='ok')
+        else:
+            flask.abort(404)
+
+
+blueprint.add_url_rule('/api/tasks/<int:id>/', view_func=TaskView.as_view('task'))

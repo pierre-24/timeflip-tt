@@ -38,16 +38,16 @@ class TaskSchema(BaseSchema):
     class Meta:
         model = Task
 
-    id = auto_field()
-    name = auto_field()
-    color = auto_field(validate=validate_color)
-    category = auto_field('category_id')
+    id = auto_field(required=True)
+    name = auto_field(required=True)
+    color = auto_field(validate=validate_color, required=True)
+    category = auto_field('category_id', required=True)
 
 
 class CategorySchema(BaseSchema):
     class Meta:
         model = Category
 
-    id = auto_field()
-    name = auto_field()
+    id = auto_field(required=True)
+    name = auto_field(required=True)
     tasks = Nested(TaskSchema, many=True, exclude=('category', ))
