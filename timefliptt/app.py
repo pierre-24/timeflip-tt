@@ -4,7 +4,6 @@ import atexit
 import flask
 from flask_bootstrap import Bootstrap
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
 
 import timefliptt
 from timefliptt.config import Config
@@ -12,14 +11,6 @@ from timefliptt.timeflip import daemon_start, daemon_stop, soft_connect
 
 
 db = SQLAlchemy()
-login_manager = LoginManager()
-
-
-@login_manager.user_loader
-def load_user(user_id):
-    from timefliptt.blueprints.base_models import User
-    user = User.query.get(user_id)
-    return user
 
 
 def create_app(config: Config) -> flask.Flask:
@@ -29,14 +20,9 @@ def create_app(config: Config) -> flask.Flask:
     # module
     Bootstrap().init_app(app)
     db.init_app(app)
-    login_manager.init_app(app)
-    login_manager.login_view = 'visitor.login'
 
     # urls
-    from timefliptt.blueprints.visitor.views import blueprint
-    app.register_blueprint(blueprint)
-
-    from timefliptt.blueprints.user.views import blueprint
+    from timefliptt.blueprints.visitors.views import blueprint
     app.register_blueprint(blueprint)
 
     from timefliptt.blueprints.api.views import blueprint

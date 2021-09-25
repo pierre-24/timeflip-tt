@@ -3,7 +3,6 @@ from typing import Union, ClassVar
 import flask
 from flask import current_app, Response
 from flask.views import MethodView
-from flask_login import login_required
 from flask_wtf import FlaskForm
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -148,7 +147,3 @@ class DeleteObjectView(DeleteView):
             return self.object_class.query.get(flask.request.form.get(self.kwarg_var, -1))
         except SQLAlchemyError:
             return None
-
-
-class LoginRequiredMixin:
-    decorators = [login_required]

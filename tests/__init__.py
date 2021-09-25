@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from timefliptt.config import Config
 from timefliptt.app import create_app, db
-from timefliptt.blueprints.base_models import User
+from timefliptt.blueprints.base_models import TimeFlipDevice
 
 
 class FlaskTestCase(TestCase):
@@ -35,7 +35,7 @@ class FlaskTestCase(TestCase):
         self.admin_address = ':'.join(['00'] * 6)
         self.admin_password = '0' * 6
 
-        self.admin = User.create(self.admin_name, self.admin_address, self.admin_password)
+        self.admin = TimeFlipDevice.create(self.admin_name, self.admin_address, self.admin_password)
         self.db_session.add(self.admin)
         self.db_session.commit()
 

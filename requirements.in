@@ -7,7 +7,6 @@ flask
 Flask-WTF
 bootstrap-flask
 Flask-SQLAlchemy
-flask-login
 is-safe-url
 marshmallow-sqlalchemy
 webargs

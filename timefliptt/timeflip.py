@@ -97,6 +97,16 @@ def _connect() -> bool:
     return False
 
 
+def connected_to(address: str) -> bool:
+    global _lock, _loop, _timeflip_address
+
+    with _lock:
+        if _loop is None:
+            raise DaemonStopped()
+
+        return address == _timeflip_address
+
+
 def try_reconnect() -> bool:
     """Attempt reconnect, if allowed"""
 

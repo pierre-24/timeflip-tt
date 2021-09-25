@@ -8,7 +8,7 @@ from webargs.flaskparser import FlaskParser
 from marshmallow import EXCLUDE
 
 from timefliptt.app import db
-from timefliptt.blueprints.base_models import Category, Task
+from timefliptt.blueprints.base_models import Category, Task, TimeFlipDevice
 
 
 class Parser(FlaskParser):
@@ -51,3 +51,21 @@ class CategorySchema(BaseSchema):
     id = auto_field(required=True)
     name = auto_field(required=True)
     tasks = Nested(TaskSchema, many=True, exclude=('category', ))
+
+
+MAC_ADDRESS = re.compile(r'^[0-9a-fA-F]{2}(:([0-9a-fA-F]{2})){5}$')
+
+
+def validate_mac(address: str):
+    if not MAC_ADDRESS.match(address):
+        raise ValidationError('This is not a valid MAC address')
+
+
+class TimeFlipDeviceSchema(BaseSchema):
+    class Meta:
+        model = TimeFlipDevice
+
+    id = auto_field(required=True)
+    address = auto_field(required=True, validate=validate_mac)
+    password = auto_field(required=True)
+    name = auto_field(required=True)

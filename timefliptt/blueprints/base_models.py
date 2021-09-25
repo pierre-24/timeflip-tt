@@ -1,4 +1,3 @@
-import hashlib
 from typing import Union
 
 from flask_login import UserMixin
@@ -14,26 +13,22 @@ class BaseModel(db.Model):
     date_modified = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
 
 
-class User(BaseModel, UserMixin):
-    name = db.Column(db.VARCHAR(length=150), nullable=False)
-    device_address = db.Column(db.VARCHAR(length=24), nullable=False)
-    password_hash = db.Column(db.VARCHAR(length=64), nullable=False)
+class TimeFlipDevice(BaseModel, UserMixin):
 
-    @staticmethod
-    def hash_pass(password: str) -> str:
-        return hashlib.sha512(password.encode()).hexdigest()
+    __tablename__ = 'timeflip_device'
+
+    name = db.Column(db.VARCHAR(length=150), nullable=False)
+    address = db.Column(db.VARCHAR(length=24), nullable=False)
+    password = db.Column(db.VARCHAR(length=6), nullable=False)
 
     @classmethod
-    def create(cls, name: str, address: str, password: str) -> 'User':
+    def create(cls, name: str, address: str, password: str) -> 'TimeFlipDevice':
         o = cls()
         o.name = name
-        o.device_address = address
-        o.password_hash = User.hash_pass(password)
+        o.address = address
+        o.password = password
 
         return o
-
-    def is_correct_password(self, password: str) -> bool:
-        return self.password_hash == self.hash_pass(password)
 
 
 class Category(BaseModel):
@@ -71,17 +66,17 @@ class FacetToTask(BaseModel):
 
     facet = db.Column(db.Integer, nullable=False)
 
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    user = db.relationship('User', uselist=False)
+    timeflip_device_id = db.Column(db.Integer, db.ForeignKey('timeflip_device.id'))
+    timeflip_device = db.relationship('TimeFlipDevice', uselist=False)
 
     task_id = db.Column(db.Integer, db.ForeignKey('task.id'))
     task = db.relationship('Task', uselist=False)
 
     @classmethod
-    def create(cls, user: Union[int, User], facet: int, task: Union[int, Task]) -> 'FacetToTask':
+    def create(cls, device: Union[int, TimeFlipDevice], facet: int, task: Union[int, Task]) -> 'FacetToTask':
         o = cls()
         o.facet = facet
-        o.user_id = user if type(user) is int else user.id
+        o.timeflip_device_id = device if type(device) is int else device.id
         o.task_id = task if type(task) is int else task.id
 
         return o
@@ -93,8 +88,8 @@ class HistoryElement(BaseModel):
     original_facet = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.Text)
 
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='SET NULL'))
-    user = db.relationship('User', uselist=False)
+    timeflip_device_id = db.Column(db.Integer, db.ForeignKey('timeflip_device.id', ondelete='SET NULL'))
+    timeflip_device = db.relationship('TimeFlipDevice', uselist=False)
 
     task_id = db.Column(db.Integer, db.ForeignKey('task.id', ondelete='SET NULL'))
     task = db.relationship('Task', uselist=False)
@@ -104,7 +99,7 @@ class HistoryElement(BaseModel):
             cls,
             start_date,
             end_date,
-            user: Union[int, User],
+            user: Union[int, TimeFlipDevice],
             task: Union[int, Task],
             comment: str = None
     ) -> 'HistoryElement':
@@ -112,7 +107,7 @@ class HistoryElement(BaseModel):
 
         o.start_date = start_date
         o.end_date = end_date
-        o.user_id = user if type(user) is int else user.int
+        o.timeflip__id = user if type(user) is int else user.int
         o.task_id = task if type(task) is int else task.id
         o.comment = comment
 

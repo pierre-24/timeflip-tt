@@ -2,6 +2,10 @@ import asyncio
 
 from typing import List
 
+from webargs import fields, validate
+from marshmallow import Schema, post_load
+
+import flask
 from flask import Response, jsonify
 from flask.views import MethodView
 
@@ -9,13 +13,17 @@ from pytimefliplib.async_client import AsyncClient, TimeFlipRuntimeError, CHARAC
 from bleak import BleakScanner, BleakClient, BleakError
 from asyncio import TimeoutError
 
+from timefliptt.app import db
 from timefliptt.blueprints.api.views import blueprint
-from timefliptt.timeflip import run_coro
-from timefliptt.blueprints.base_models import User
-from timefliptt.blueprints.base_views import LoginRequiredMixin
+from timefliptt.timeflip import run_coro, connected_to, hard_connect, hard_logout, soft_connect
+from timefliptt.blueprints.base_models import TimeFlipDevice
+from timefliptt.blueprints.api.schemas import TimeFlipDeviceSchema, Parser
 
 
-class ListAvailableDevices(MethodView):
+parser = Parser()
+
+
+class AvailableDevicesView(MethodView):
     """List the available TimeFlip devices
 
     Inspired by
@@ -23,6 +31,7 @@ class ListAvailableDevices(MethodView):
     """
     async def get_devices(self) -> List[dict]:
         avail_timeflip = []
+        other_devices = []
 
         devices = await BleakScanner.discover()
         for d in devices:
@@ -31,17 +40,22 @@ class ListAvailableDevices(MethodView):
                     _ = await client.read_gatt_char(CHARACTERISTICS['facet'])
                     avail_timeflip.append(d)
             except (BleakError, TimeoutError):
-                pass
+                other_devices.append(d)
 
-        user_addresses = [u.device_address for u in User.query.all()]
+        users: List[TimeFlipDevice] = TimeFlipDevice.query.all()
 
-        return [
-            {
-                'address': d.address,
-                'name': d.name,
-                'already_paired': d.address in user_addresses
-            } for d in avail_timeflip
-        ]
+        def get_id(address: str):
+            pk = -1
+            for u in users:
+                if u.address == address:
+                    return u.id
+            return pk
+
+        return [{
+            'address': d.address,
+            'name': d.name,
+            'id': get_id(d.address)
+        } for d in avail_timeflip]
 
     def get(self) -> Response:
         loop = asyncio.new_event_loop()
@@ -51,14 +65,82 @@ class ListAvailableDevices(MethodView):
         return jsonify(discovered=available_devices)
 
 
-blueprint.add_url_rule('/api/timeflip/discover', view_func=ListAvailableDevices.as_view('timeflip-discover'))
+blueprint.add_url_rule('/api/devices/', view_func=AvailableDevicesView.as_view('devices'))
 
 
-class StatusView(LoginRequiredMixin, MethodView):
+class TimeFlipsView(MethodView):
+    def get(self) -> Response:
+        """List registered devices
+        """
+        return jsonify(timeflip_devices=TimeFlipDeviceSchema(many=True).dump(TimeFlipDevice.query.all()))
+
+    @parser.use_kwargs(TimeFlipDeviceSchema(exclude=('id', )), location='json')
+    def post(self, name: str, address: str, password: str) -> Response:
+        """Register a new device
+        """
+
+        device = TimeFlipDevice.create(name, address, password)
+
+        db.session.add(device)
+        db.session.commit()
+
+        return TimeFlipDeviceSchema().dump(device)
+
+    def delete(self) -> Response:
+        """Disconnect from any device
+        """
+
+        hard_logout()
+        return jsonify(status='ok')
+
+
+blueprint.add_url_rule('/api/timeflips/', view_func=TimeFlipsView.as_view('timeflips'))
+
+
+class TimeFlipView(MethodView):
+
+    class TimeFlipDeviceSimpleSchema(Schema):
+        id = fields.Integer(required=True)
+
+        @post_load
+        def make_object(self, data, **kwargs):
+            return TimeFlipDevice.query.get(data['id'])
+
+    @parser.use_args(TimeFlipDeviceSimpleSchema, location='view_args')
+    def get(self, device: TimeFlipDevice, id: int) -> Response:
+        """View information for an existing timeflip
+        """
+
+        if device is not None:
+            return jsonify(TimeFlipDeviceSchema().dump(device))
+        else:
+            flask.abort(404)
+
+    @parser.use_args(TimeFlipDeviceSimpleSchema, location='view_args')
+    def delete(self, device: TimeFlipDevice, id: int) -> Response:
+        """Delete timeflip
+        """
+
+        if device is not None:
+            db.session.delete(device)
+            db.session.commit()
+            return jsonify(status='ok')
+        else:
+            flask.abort(404)
+
+
+blueprint.add_url_rule('/api/timeflips/<int:id>/', view_func=TimeFlipView.as_view('timeflip'))
+
+
+class TimeFlipHandleView(MethodView):
+    """Route that gather everything that requires communication with the TimeFlip
+    """
+
     @staticmethod
     async def get_info(client: AsyncClient) -> dict:
         return {
             'status': 'ok',
+            'address': client.address,
             'name': await client.device_name(),
             'facet': client.current_facet_value,
             'battery': await client.battery_level(),
@@ -66,14 +148,73 @@ class StatusView(LoginRequiredMixin, MethodView):
             'locked': client.locked
         }
 
-    def get(self) -> Response:
-        try:
-            return run_coro(self.get_info)
-        except TimeFlipRuntimeError as e:
-            return jsonify(**{
-                'status': 'error',
-                'msg': str(e)
-            })
+    @parser.use_args(TimeFlipView.TimeFlipDeviceSimpleSchema, location='view_args')
+    def get(self, device: TimeFlipDevice, id: int) -> Response:
+        """Get status
+        """
+
+        if device is not None:
+            if not connected_to(device.address):
+                flask.abort(403)
+
+            try:
+                data = run_coro(self.get_info)
+                return jsonify(data)
+            except (TimeFlipRuntimeError, BleakError) as e:
+                return jsonify(status='ko', error=str(e))
+        else:
+            flask.abort(404)
+
+    @parser.use_args(TimeFlipView.TimeFlipDeviceSimpleSchema, location='view_args')
+    def post(self, device: TimeFlipDevice, id: int) -> Response:
+        """Connect to the device"""
+
+        if device is not None:
+            try:
+                hard_connect(device.address, device.password)
+                return jsonify(status='ok')
+            except (TimeFlipRuntimeError, BleakError) as e:
+                return jsonify(status='ko', error=str(e))
+        else:
+            flask.abort(404)
+
+    @staticmethod
+    async def set_new_password(client: AsyncClient, password: str):
+        await client.set_password(password)
+
+    @staticmethod
+    async def set_new_name(client: AsyncClient, name: str):
+        await client.set_name(name)
+
+    @parser.use_args(TimeFlipView.TimeFlipDeviceSimpleSchema, location='view_args')
+    @parser.use_kwargs(
+        {'name': fields.Str(), 'password': fields.Str(validate=validate.Length(equal=6))}, location='json')
+    def put(self, device: TimeFlipDevice, **kwargs) -> Response:
+        """Modify device
+        """
+
+        if device is not None:
+            if not connected_to(device.address):
+                flask.abort(403)
+
+            try:
+                if 'name' in kwargs:
+                    device.name = kwargs['name']
+                    run_coro(self.set_new_name, name=device.name)
+
+                if 'password' in kwargs:
+                    device.password = kwargs['password']
+                    run_coro(self.set_new_password, password=device.password)
+                    soft_connect(device.address, kwargs['password'])
+            except (BleakError, TimeFlipRuntimeError) as e:
+                return jsonify(status='ko', error=str(e))
+
+            db.session.add(device)
+            db.session.commit()
+
+            return jsonify(status='ok')
+        else:
+            flask.abort(404)
 
 
-blueprint.add_url_rule('/api/timeflip/status', view_func=StatusView.as_view('timeflip-status'))
+blueprint.add_url_rule('/api/timeflips/<int:id>/handle', view_func=TimeFlipHandleView.as_view('timeflip-handle'))
