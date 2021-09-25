@@ -1,3 +1,4 @@
+import flask
 from flask import jsonify, Response
 from flask.views import MethodView
 
@@ -20,7 +21,7 @@ class CategoriesView(MethodView):
         return jsonify(categories=CategorySchema(many=True).dump(Category.query.all()))
 
     @parser.use_kwargs({'name': fields.Str(required=True)}, location='json')
-    def post(self, name) -> Response:
+    def post(self, name: str) -> Response:
         """Create a new category
         """
 
@@ -32,6 +33,47 @@ class CategoriesView(MethodView):
 
 
 blueprint.add_url_rule('/api/categories/', view_func=CategoriesView.as_view('categories'))
+
+
+class CategoryView(MethodView):
+
+    @parser.use_kwargs({'id': fields.Int(required='true')}, location='view_args')
+    def get(self, id: int) -> Response:
+        category = Category.query.get(id)
+
+        if category is not None:
+            return jsonify(CategorySchema().dump(category))
+        else:
+            flask.abort(404)
+
+    @parser.use_kwargs({'id': fields.Int(required='true')}, location='view_args')
+    @parser.use_kwargs({'name': fields.Str(required=True)}, location='json')
+    def put(self, id: int, name: str) -> Response:
+        category = Category.query.get(id)
+
+        if category is not None:
+            category.name = name
+
+            db.session.add(category)
+            db.session.commit()
+
+            return jsonify(CategorySchema().dump(category))
+        else:
+            flask.abort(404)
+
+    @parser.use_kwargs({'id': fields.Int(required='true')}, location='view_args')
+    def delete(self, id: int) -> Response:
+        category = Category.query.get(id)
+
+        if category is not None:
+            db.session.delete(category)
+            db.session.commit()
+            return jsonify(status='ok')
+        else:
+            flask.abort(404)
+
+
+blueprint.add_url_rule('/api/categories/<int:id>/', view_func=CategoryView.as_view('category'))
 
 
 class TasksView(MethodView):

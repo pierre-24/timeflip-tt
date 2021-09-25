@@ -24,7 +24,7 @@ class CategoryTestCase(FlaskTestCase):
         self.num_category = Category.query.count()
         self.num_task = Task.query.count()
 
-    def test_get_categories_ok(self):
+    def test_view_categories_ok(self):
         self.assertEqual(self.num_category, Category.query.count())
 
         response = self.client.get(flask.url_for('api.categories'))
@@ -51,3 +51,39 @@ class CategoryTestCase(FlaskTestCase):
 
         c = Category.query.get(data['id'])
         self.assertEqual(c.name, name)
+
+    def test_view_category_ok(self):
+        self.assertEqual(self.num_category, Category.query.count())
+
+        response = self.client.get(flask.url_for('api.category', id=self.category_1.id))
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+
+        self.assertEqual(data['id'], self.category_1.id)
+        self.assertEqual(data['name'], self.category_1.name)
+
+    def test_modify_category_ok(self):
+        self.assertEqual(self.num_category, Category.query.count())
+
+        name = 'whatever'
+
+        response = self.client.put(flask.url_for('api.category', id=self.category_1.id), json={
+            'name': name
+        })
+        self.assertEqual(response.status_code, 200)
+
+        data = response.get_json()
+        self.assertEqual(data['id'], self.category_1.id)
+        self.assertEqual(data['name'], name)
+
+        c = Category.query.get(data['id'])
+        self.assertEqual(c.name, name)
+
+    def test_delete_category_ok(self):
+        self.assertEqual(self.num_category, Category.query.count())
+
+        response = self.client.delete(flask.url_for('api.category', id=self.category_1.id))
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(self.num_category - 1, Category.query.count())
+        self.assertIsNone(Category.query.get(self.category_1.id))
