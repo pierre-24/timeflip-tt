@@ -100,7 +100,7 @@ blueprint.add_url_rule('/api/timeflips/', view_func=TimeFlipsView.as_view('timef
 class TimeFlipView(MethodView):
 
     class TimeFlipDeviceSimpleSchema(Schema):
-        id = fields.Integer(required=True)
+        id = fields.Integer(required=True, validate=validate.Range(min=0))
 
         @post_load
         def make_object(self, data, **kwargs):

@@ -209,7 +209,7 @@ class TasksTestCase(FlaskTestCase):
         self.assertEqual(data['color'], t.color)
         self.assertEqual(data['category'], t.category_id)
 
-    def test_view_unknown_task_ok(self):
+    def test_view_unknown_task_ko(self):
         self.assertEqual(self.num_task, Task.query.count())
 
         response = self.client.get(flask.url_for('api.task', id=-1))

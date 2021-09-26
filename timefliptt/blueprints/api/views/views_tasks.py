@@ -3,7 +3,7 @@ from flask import jsonify, Response
 from flask.views import MethodView
 
 from webargs import fields
-from marshmallow import Schema, post_load
+from marshmallow import Schema, post_load, validate
 
 from timefliptt.app import db
 from timefliptt.blueprints.api.views import blueprint
@@ -39,7 +39,7 @@ blueprint.add_url_rule('/api/categories/', view_func=CategoriesView.as_view('cat
 class CategoryView(MethodView):
 
     class CategorySimpleSchema(Schema):
-        id = fields.Integer(required=True)
+        id = fields.Integer(required=True, validate=validate.Range(min=0))
 
         @post_load
         def make_object(self, data, **kwargs):
@@ -118,7 +118,7 @@ blueprint.add_url_rule('/api/tasks/', view_func=TasksView.as_view('tasks'))
 class TaskView(MethodView):
 
     class TaskSimpleSchema(Schema):
-        id = fields.Integer(required=True)
+        id = fields.Integer(required=True, validate=validate.Range(min=0))
 
         @post_load
         def make_object(self, data, **kwargs):
