@@ -16,8 +16,8 @@ from asyncio import TimeoutError
 from timefliptt.app import db
 from timefliptt.blueprints.api.views import blueprint
 from timefliptt.timeflip import run_coro, connected_to, hard_connect, hard_logout, soft_connect
-from timefliptt.blueprints.base_models import TimeFlipDevice
-from timefliptt.blueprints.api.schemas import TimeFlipDeviceSchema, Parser
+from timefliptt.blueprints.base_models import TimeFlipDevice, FacetToTask, Task
+from timefliptt.blueprints.api.schemas import TimeFlipDeviceSchema, Parser, FacetToTaskSchema
 
 
 parser = Parser()
@@ -218,3 +218,108 @@ class TimeFlipHandleView(MethodView):
 
 
 blueprint.add_url_rule('/api/timeflips/<int:id>/handle', view_func=TimeFlipHandleView.as_view('timeflip-handle'))
+
+
+class FacetsView(MethodView):
+
+    @parser.use_args(TimeFlipView.TimeFlipDeviceSimpleSchema, location='view_args')
+    def get(self, device: TimeFlipDevice, id: int) -> Response:
+        """Get facets
+        """
+
+        if device is not None:
+            return jsonify(
+                facet_to_task=FacetToTaskSchema(many=True, exclude=('timeflip_device', 'id')).dump(
+                    FacetToTask.query.filter(FacetToTask.timeflip_device_id.is_(device.id)).all()
+                ))
+        else:
+            flask.abort(404)
+
+
+blueprint.add_url_rule('/api/timeflips/<int:id>/facets/', view_func=FacetsView.as_view('timeflip-facets'))
+
+
+class FacetView(MethodView):
+
+    class DeviceAndFacetSchema(Schema):
+        id = fields.Integer(required=True, validate=validate.Range(min=0))
+        facet = fields.Integer(required=True, validate=validate.Range(min=0, max=62))
+
+        @post_load
+        def make_object(self, data, **kwargs):
+            return {
+                'device': TimeFlipDevice.query.get(data['id']),
+                'facet': data['facet']
+            }
+
+    class SimpleFacetToTaskSchema(Schema):
+        id = fields.Integer(required=True, validate=validate.Range(min=0))
+        facet = fields.Integer(required=True, validate=validate.Range(min=0, max=62))
+
+        @post_load
+        def make_object(self, data, **kwargs):
+            return {
+                'ftt': FacetToTask.query
+                .filter(FacetToTask.timeflip_device_id.is_(data['id']))
+                .filter(FacetToTask.facet.is_(data['facet']))
+                .first()
+            }
+
+    class TaskSimpleSchema(Schema):
+        task = fields.Integer(required=True, validate=validate.Range(min=0))
+
+        @post_load
+        def make_object(self, data, **kwargs):
+            return {
+                'task': Task.query.get(data['task'])
+            }
+
+    @parser.use_kwargs(SimpleFacetToTaskSchema, location='view_args')
+    def get(self, id: int, facet: int, ftt: FacetToTask):
+        """View which task is associated to this facet
+        """
+
+        if ftt is not None:
+            return jsonify(FacetToTaskSchema(exclude=('id', 'timeflip_device')).dump(ftt))
+        else:
+            flask.abort(404)
+
+    @parser.use_kwargs(DeviceAndFacetSchema, location='view_args')
+    @parser.use_kwargs(TaskSimpleSchema, location='json')
+    def put(self, id: int, facet: int, device: TimeFlipDevice, task: Task) -> Response:
+        """Add a Task to a facet
+        """
+
+        if device is not None and task is not None:
+            ftt = FacetToTask.query\
+                .filter(FacetToTask.timeflip_device_id.is_(device.id))\
+                .filter(FacetToTask.facet.is_(facet))\
+                .first()
+
+            if ftt is not None:
+                ftt.task_id = task.id
+            else:
+                ftt = FacetToTask.create(device, facet, task)
+
+            db.session.add(ftt)
+            db.session.commit()
+
+            return jsonify(FacetToTaskSchema(exclude=('timeflip_device', 'id')).dump(ftt))
+        else:
+            flask.abort(404)
+
+    @parser.use_kwargs(SimpleFacetToTaskSchema, location='view_args')
+    def delete(self, id: int, facet: int, ftt: FacetToTask):
+        """Remove the task from the facet (if it exists)
+        """
+
+        if ftt is not None:
+            db.session.delete(ftt)
+            db.session.commit()
+
+            return jsonify(status='ok')
+        else:
+            flask.abort(404)
+
+
+blueprint.add_url_rule('/api/timeflips/<int:id>/facets/<int:facet>/', view_func=FacetView.as_view('timeflip-facet'))

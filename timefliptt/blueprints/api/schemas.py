@@ -8,7 +8,7 @@ from webargs.flaskparser import FlaskParser
 from marshmallow import EXCLUDE
 
 from timefliptt.app import db
-from timefliptt.blueprints.base_models import Category, Task, TimeFlipDevice
+from timefliptt.blueprints.base_models import Category, Task, TimeFlipDevice, FacetToTask
 
 
 class Parser(FlaskParser):
@@ -38,7 +38,7 @@ class TaskSchema(BaseSchema):
     class Meta:
         model = Task
 
-    id = auto_field(required=True)
+    id = auto_field(required=True, validate=validate.Range(min=0))
     name = auto_field(required=True)
     color = auto_field(validate=validate_color, required=True)
     category = auto_field('category_id', required=True)
@@ -48,7 +48,7 @@ class CategorySchema(BaseSchema):
     class Meta:
         model = Category
 
-    id = auto_field(required=True)
+    id = auto_field(required=True, validate=validate.Range(min=0))
     name = auto_field(required=True)
     tasks = Nested(TaskSchema, many=True, exclude=('category', ))
 
@@ -65,7 +65,17 @@ class TimeFlipDeviceSchema(BaseSchema):
     class Meta:
         model = TimeFlipDevice
 
-    id = auto_field(required=True)
+    id = auto_field(required=True, validate=validate.Range(min=0))
     address = auto_field(required=True, validate=validate_mac)
     password = auto_field(required=True)
     name = auto_field(required=True, validate=validate.Length(max=19))
+
+
+class FacetToTaskSchema(BaseSchema):
+    class Meta:
+        model = FacetToTask
+
+    id = auto_field(required=True, validate=validate.Range(min=0))
+    facet = auto_field(required=True, validate=validate.Range(min=0, max=62))
+    task = Nested(TaskSchema)
+    timeflip_device = Nested(TimeFlipDeviceSchema)
