@@ -1,6 +1,5 @@
 from typing import Union
-
-from flask_login import UserMixin
+from datetime import datetime
 
 from timefliptt.app import db
 
@@ -13,7 +12,7 @@ class BaseModel(db.Model):
     date_modified = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
 
 
-class TimeFlipDevice(BaseModel, UserMixin):
+class TimeFlipDevice(BaseModel):
 
     __tablename__ = 'timeflip_device'
 
@@ -83,8 +82,8 @@ class FacetToTask(BaseModel):
 
 
 class HistoryElement(BaseModel):
-    start_date = db.Column(db.DateTime, nullable=False)
-    end_date = db.Column(db.DateTime, nullable=False)
+    start = db.Column(db.DateTime, nullable=False)
+    end = db.Column(db.DateTime, nullable=False)
     original_facet = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.Text)
 
@@ -97,18 +96,40 @@ class HistoryElement(BaseModel):
     @classmethod
     def create(
             cls,
-            start_date,
-            end_date,
-            user: Union[int, TimeFlipDevice],
+            start: datetime,
+            end: datetime,
+            device: Union[int, TimeFlipDevice],
             task: Union[int, Task],
             comment: str = None
     ) -> 'HistoryElement':
         o = cls()
 
-        o.start_date = start_date
-        o.end_date = end_date
-        o.timeflip__id = user if type(user) is int else user.int
+        if start > end:
+            raise ValueError('start > end')
+
+        o.start = start
+        o.end = end
+        o.timeflip_device_id = device if type(device) is int else device.id
         o.task_id = task if type(task) is int else task.id
         o.comment = comment
 
         return o
+
+    def duration(self, start: datetime = None, end: datetime = None) -> int:
+        """Get the duration within time frame if any.
+        `start=None` is equivalent to `start=datetime.min` and `end=None` is equivalent to `end=datetime.max`
+        """
+
+        if start is None:
+            start = datetime.min
+
+        if end is None:
+            end = datetime.max
+
+        if start > end:
+            raise ValueError('start > end')
+
+        if start > self.end or end < self.start:
+            return 0
+        else:
+            return (min(end, self.end) - max(start, self.start)).seconds
