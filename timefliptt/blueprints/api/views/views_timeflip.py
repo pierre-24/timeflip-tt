@@ -280,7 +280,7 @@ class FacetView(MethodView):
         """
 
         if ftt is not None:
-            return jsonify(FacetToTaskSchema(exclude=('id', 'timeflip_device')).dump(ftt))
+            return jsonify(FacetToTaskSchema(exclude=('id', )).dump(ftt))
         else:
             flask.abort(404)
 

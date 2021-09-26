@@ -10,7 +10,7 @@ install:
 	pip-sync && python setup.py develop
 
 lint:
-	flake8 timefliptt --max-line-length=120 --ignore=N802
+	flake8 timefliptt tests --max-line-length=120 --ignore=N802
 
 test:
 	python -m unittest discover -s tests

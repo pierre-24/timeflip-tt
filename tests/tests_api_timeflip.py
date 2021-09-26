@@ -2,10 +2,10 @@ import flask
 
 from tests import FlaskTestCase
 
-from timefliptt.blueprints.base_models import TimeFlipDevice
+from timefliptt.blueprints.base_models import TimeFlipDevice, Task, Category, FacetToTask
 
 
-class CategoriesTestCase(FlaskTestCase):
+class TimeFlipTestCase(FlaskTestCase):
     def setUp(self):
         super().setUp()
 
@@ -133,3 +133,129 @@ class CategoriesTestCase(FlaskTestCase):
         self.assertEqual(response.status_code, 404)
 
         self.assertEqual(self.num_devices, TimeFlipDevice.query.count())
+
+
+class FacetToTaskTestCase(FlaskTestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.category = Category.create('test1')
+        self.db_session.add(self.category)
+
+        self.device = TimeFlipDevice.create('TF', '00:00:00:00:00:00', '000000')
+        self.db_session.add(self.device)
+        self.db_session.commit()
+
+        self.num_devices = TimeFlipDevice.query.count()
+
+        self.task_1 = Task.create('test1', self.category, '#ffffff')
+        self.db_session.add(self.task_1)
+        self.task_2 = Task.create('test2', self.category, '#ffffff')
+        self.db_session.add(self.task_2)
+        self.db_session.commit()
+
+        self.ftt = FacetToTask.create(self.device, 0, self.task_1)
+        self.db_session.add(self.ftt)
+        self.db_session.commit()
+
+        self.num_ftt = FacetToTask.query.count()
+
+    def test_view_facets_ok(self):
+        self.assertEqual(self.num_ftt, FacetToTask.query.count())
+
+        response = self.client.get(flask.url_for('api.timeflip-facets', id=self.device.id))
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+
+        self.assertIn('facet_to_task', data)
+        self.assertEqual(len(data['facet_to_task']), self.num_ftt)
+
+    def test_add_tasks_new_facet_ok(self):
+        self.assertEqual(self.num_ftt, FacetToTask.query.count())
+        facet = 1
+        self.assertNotEqual(facet, self.ftt.facet)
+
+        response = self.client.put(flask.url_for('api.timeflip-facet', id=self.device.id, facet=facet), json={
+            'task': self.task_2.id
+        })
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+
+        self.assertEqual(facet, data['facet'])
+        self.assertEqual(self.task_2.id, data['task']['id'])
+
+        self.assertEqual(self.num_ftt + 1, FacetToTask.query.count())
+
+        ftt = FacetToTask.query.order_by(FacetToTask.id.desc()).first()
+        self.assertEqual(facet, ftt.facet)
+        self.assertEqual(self.device.id, ftt.timeflip_device_id)
+        self.assertEqual(self.task_2.id, ftt.task_id)
+
+    def test_add_tasks_existing_facet_ok(self):
+        self.assertEqual(self.num_ftt, FacetToTask.query.count())
+        facet = self.ftt.facet
+        self.assertEqual(self.ftt.task_id, self.task_1.id)
+
+        response = self.client.put(flask.url_for('api.timeflip-facet', id=self.device.id, facet=facet), json={
+            'task': self.task_2.id
+        })
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+
+        self.assertEqual(facet, data['facet'])
+        self.assertEqual(self.task_2.id, data['task']['id'])
+
+        self.assertEqual(self.num_ftt, FacetToTask.query.count())
+
+        ftt = FacetToTask.query.get(self.ftt.id)  # existing line is modified!
+        self.assertEqual(facet, ftt.facet)
+        self.assertEqual(self.device.id, ftt.timeflip_device_id)
+        self.assertEqual(self.task_2.id, ftt.task_id)
+
+    def test_add_tasks_too_large_facet_ko(self):
+        self.assertEqual(self.num_ftt, FacetToTask.query.count())
+        facet = 200
+        self.assertNotEqual(facet, self.ftt.facet)
+
+        response = self.client.put(flask.url_for('api.timeflip-facet', id=self.device.id, facet=facet), json={
+            'task': self.task_2.id
+        })
+        self.assertEqual(response.status_code, 422)
+
+        self.assertEqual(self.num_ftt, FacetToTask.query.count())
+
+    def test_view_facet_ok(self):
+        self.assertEqual(self.num_ftt, FacetToTask.query.count())
+        facet = self.ftt.facet
+
+        response = self.client.get(flask.url_for('api.timeflip-facet', id=self.device.id, facet=facet))
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+
+        self.assertEqual(facet, data['facet'])
+        self.assertEqual(self.task_1.id, data['task']['id'])
+
+    def test_view_unknown_facet_ko(self):
+        self.assertEqual(self.num_ftt, FacetToTask.query.count())
+        facet = 1
+        self.assertNotEqual(facet, self.ftt.facet)
+
+        response = self.client.get(flask.url_for('api.timeflip-facet', id=self.device.id, facet=facet))
+        self.assertEqual(response.status_code, 404)
+
+    def test_delete_facet_ok(self):
+        self.assertEqual(self.num_ftt, FacetToTask.query.count())
+
+        response = self.client.delete(flask.url_for('api.timeflip-facet', id=self.device.id, facet=self.ftt.facet))
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(self.num_ftt - 1, FacetToTask.query.count())
+        self.assertIsNone(FacetToTask.query.get(self.ftt.id))
+
+    def test_delete_unknown_facet_ok(self):
+        self.assertEqual(self.num_ftt, FacetToTask.query.count())
+        facet = 1
+        self.assertNotEqual(facet, self.ftt.facet)
+
+        response = self.client.delete(flask.url_for('api.timeflip-facet', id=self.device.id, facet=facet))
+        self.assertEqual(response.status_code, 404)
