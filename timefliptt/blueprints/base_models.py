@@ -98,8 +98,9 @@ class HistoryElement(BaseModel):
             cls,
             start: datetime,
             end: datetime,
+            facet: int,
             device: Union[int, TimeFlipDevice],
-            task: Union[int, Task],
+            task: Union[int, Task] = None,
             comment: str = None
     ) -> 'HistoryElement':
         o = cls()
@@ -109,8 +110,12 @@ class HistoryElement(BaseModel):
 
         o.start = start
         o.end = end
+        o.original_facet = facet
         o.timeflip_device_id = device if type(device) is int else device.id
-        o.task_id = task if type(task) is int else task.id
+
+        if task is not None:
+            o.task_id = task if type(task) is int else task.id
+
         o.comment = comment
 
         return o

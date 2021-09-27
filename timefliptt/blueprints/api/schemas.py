@@ -8,7 +8,7 @@ from webargs.flaskparser import FlaskParser
 from marshmallow import EXCLUDE
 
 from timefliptt.app import db
-from timefliptt.blueprints.base_models import Category, Task, TimeFlipDevice, FacetToTask
+from timefliptt.blueprints.base_models import Category, Task, TimeFlipDevice, FacetToTask, HistoryElement
 
 
 class Parser(FlaskParser):
@@ -77,5 +77,19 @@ class FacetToTaskSchema(BaseSchema):
 
     id = auto_field(required=True, validate=validate.Range(min=0))
     facet = auto_field(required=True, validate=validate.Range(min=0, max=62))
+    task = Nested(TaskSchema)
+    timeflip_device = Nested(TimeFlipDeviceSchema)
+
+
+class HistoryElementSchema(BaseSchema):
+    class Meta:
+        model = HistoryElement
+
+    id = auto_field(required=True, validate=validate.Range(min=0))
+    start = auto_field(required=True)
+    end = auto_field(required=True)
+    original_facet = auto_field(required=True)
+    comment = auto_field(required=True)
+
     task = Nested(TaskSchema)
     timeflip_device = Nested(TimeFlipDeviceSchema)

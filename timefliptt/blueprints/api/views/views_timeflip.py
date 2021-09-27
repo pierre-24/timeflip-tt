@@ -1,6 +1,7 @@
 import asyncio
+from datetime import datetime, timedelta
 
-from typing import List
+from typing import List, Tuple
 
 from webargs import fields, validate
 from marshmallow import Schema, post_load
@@ -16,8 +17,8 @@ from asyncio import TimeoutError
 from timefliptt.app import db
 from timefliptt.blueprints.api.views import blueprint
 from timefliptt.timeflip import run_coro, connected_to, hard_connect, hard_logout, soft_connect
-from timefliptt.blueprints.base_models import TimeFlipDevice, FacetToTask, Task
-from timefliptt.blueprints.api.schemas import TimeFlipDeviceSchema, Parser, FacetToTaskSchema
+from timefliptt.blueprints.base_models import TimeFlipDevice, FacetToTask, Task, HistoryElement
+from timefliptt.blueprints.api.schemas import TimeFlipDeviceSchema, Parser, FacetToTaskSchema, HistoryElementSchema
 
 
 parser = Parser()
@@ -133,7 +134,8 @@ blueprint.add_url_rule('/api/timeflips/<int:id>/', view_func=TimeFlipView.as_vie
 
 
 class TimeFlipHandleView(MethodView):
-    """Route that gather everything that requires communication with the TimeFlip
+    """Route that gather most of the things (except history and logout)
+    that requires communication with the TimeFlip
     """
 
     @staticmethod
@@ -323,3 +325,66 @@ class FacetView(MethodView):
 
 
 blueprint.add_url_rule('/api/timeflips/<int:id>/facets/<int:facet>/', view_func=FacetView.as_view('timeflip-facet'))
+
+
+class TimeFlipHistoryView(MethodView):
+
+    @staticmethod
+    async def get_history(client: AsyncClient, delete: bool = True) -> List[Tuple[int, int, bytearray]]:
+        history = await client.history()
+        if delete:
+            await client.history_delete()
+
+        return history
+
+    @parser.use_args(TimeFlipView.TimeFlipDeviceSimpleSchema, location='view_args')
+    def get(self, device: TimeFlipDevice, id: int) -> Response:
+        """Get history. Note that it is deleted by default on the host device.
+        """
+
+        if device is not None:
+            if not connected_to(device.address):
+                flask.abort(403)
+
+            # get corresponding task
+            ftts = FacetToTask.query.filter(FacetToTask.timeflip_device_id.is_(device.id)).all()
+            facet_to_task = {}
+            for ftt in ftts:
+                facet_to_task[ftt.facet] = ftt.task
+
+            # get history
+            try:
+                history = run_coro(self.get_history)
+            except (BleakError, TimeFlipRuntimeError) as e:
+                return jsonify(status='ko', error=str(e))
+
+            history_elements = []
+            start_tm = sum(h[1] for h in history)
+            start = datetime.now() - timedelta(seconds=start_tm)
+            start -= timedelta(microseconds=start.microsecond)  # set microsecond to zero
+
+            for facet, duration, _ in history:
+                end = start + timedelta(seconds=duration)
+
+                task = None
+                if facet in facet_to_task:
+                    task = facet_to_task[facet]
+
+                history_element = HistoryElement.create(start, end, facet, device, task)
+                db.session.add(history_element)
+                history_elements.append(history_element)
+                start = end
+
+            db.session.commit()
+
+            return jsonify(
+                history_elements=HistoryElementSchema(
+                    many=True,
+                    exclude=('timeflip_device', )
+                ).dump(history_elements)
+            )
+        else:
+            raise flask.abort(404)
+
+
+blueprint.add_url_rule('/api/timeflips/<int:id>/history', view_func=TimeFlipHistoryView.as_view('timeflip-history'))
