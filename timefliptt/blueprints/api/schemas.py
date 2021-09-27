@@ -94,4 +94,4 @@ class HistoryElementSchema(BaseSchema):
     comment = auto_field(required=True)
 
     task = Nested(TaskSchema)
-    timeflip_device = Nested(TimeFlipDeviceSchema)
+    timeflip_device = auto_field('timeflip_device_id')

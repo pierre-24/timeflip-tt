@@ -39,6 +39,7 @@ class TimeFlipTestCase(FlaskTestCase):
         self.assertEqual(response.status_code, 200)
         data = response.get_json()
 
+        self.assertIsNone(data['name'])
         self.assertEqual(password, data['password'])
         self.assertEqual(address, data['address'])
 
@@ -52,29 +53,11 @@ class TimeFlipTestCase(FlaskTestCase):
     def test_add_device_wrong_address_ko(self):
         self.assertEqual(self.num_devices, TimeFlipDevice.query.count())
 
-        name = 'whatever'
         address = '12:34:56:78:9a:bc'
         password = '0' * 6
 
         response = self.client.post(flask.url_for('api.timeflips'), json={
             'address': address + 'x',
-            'name': name,
-            'password': password
-        })
-
-        self.assertEqual(response.status_code, 422)
-        self.assertEqual(self.num_devices, TimeFlipDevice.query.count())
-
-    def test_add_device_wrong_name_ko(self):
-        self.assertEqual(self.num_devices, TimeFlipDevice.query.count())
-
-        name = 'x' * 19
-        address = '12:34:56:78:9a:bc'
-        password = '0' * 6
-
-        response = self.client.post(flask.url_for('api.timeflips'), json={
-            'address': address,
-            'name': name + 'x',
             'password': password
         })
 
