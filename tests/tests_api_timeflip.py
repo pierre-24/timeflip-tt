@@ -9,7 +9,7 @@ class TimeFlipTestCase(FlaskTestCase):
     def setUp(self):
         super().setUp()
 
-        self.device = TimeFlipDevice.create('TF', '00:00:00:00:00:00', '000000')
+        self.device = TimeFlipDevice.create('00:00:00:00:00:00', '000000')
         self.db_session.add(self.device)
         self.db_session.commit()
 
@@ -28,29 +28,26 @@ class TimeFlipTestCase(FlaskTestCase):
     def test_add_device_ok(self):
         self.assertEqual(self.num_devices, TimeFlipDevice.query.count())
 
-        name = 'whatever'
         address = '12:34:56:78:9a:bc'
         password = '0' * 6
 
         response = self.client.post(flask.url_for('api.timeflips'), json={
             'address': address,
-            'name': name,
             'password': password
         })
 
         self.assertEqual(response.status_code, 200)
         data = response.get_json()
 
-        self.assertEqual(name, data['name'])
         self.assertEqual(password, data['password'])
         self.assertEqual(address, data['address'])
 
         self.assertEqual(self.num_devices + 1, TimeFlipDevice.query.count())
 
         d = TimeFlipDevice.query.get(data['id'])
-        self.assertEqual(name, d.name)
+        self.assertIsNone(d.name)
         self.assertEqual(password, d.password)
-        self.assertEqual(name, d.name)
+        self.assertEqual(address, d.address)
 
     def test_add_device_wrong_address_ko(self):
         self.assertEqual(self.num_devices, TimeFlipDevice.query.count())
@@ -142,7 +139,7 @@ class FacetToTaskTestCase(FlaskTestCase):
         self.category = Category.create('test1')
         self.db_session.add(self.category)
 
-        self.device = TimeFlipDevice.create('TF', '00:00:00:00:00:00', '000000')
+        self.device = TimeFlipDevice.create('00:00:00:00:00:00', '000000', 'TF')
         self.db_session.add(self.device)
         self.db_session.commit()
 

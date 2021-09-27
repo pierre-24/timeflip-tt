@@ -35,7 +35,7 @@ class FlaskTestCase(TestCase):
         self.admin_address = ':'.join(['00'] * 6)
         self.admin_password = '0' * 6
 
-        self.admin = TimeFlipDevice.create(self.admin_name, self.admin_address, self.admin_password)
+        self.admin = TimeFlipDevice.create(self.admin_address, self.admin_password, self.admin_name)
         self.db_session.add(self.admin)
         self.db_session.commit()
 

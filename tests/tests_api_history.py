@@ -11,7 +11,7 @@ class HistoryTestCase(FlaskTestCase):
         self.category = Category.create('test1')
         self.db_session.add(self.category)
 
-        self.device = TimeFlipDevice.create('TF', '00:00:00:00:00:00', '000000')
+        self.device = TimeFlipDevice.create('00:00:00:00:00:00', '000000')
         self.db_session.add(self.device)
         self.db_session.commit()
 

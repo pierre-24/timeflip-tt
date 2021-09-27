@@ -16,12 +16,13 @@ class TimeFlipDevice(BaseModel):
 
     __tablename__ = 'timeflip_device'
 
-    name = db.Column(db.VARCHAR(length=150), nullable=False)
+    name = db.Column(db.VARCHAR(length=19))
     address = db.Column(db.VARCHAR(length=24), nullable=False)
     password = db.Column(db.VARCHAR(length=6), nullable=False)
+    calibration = db.Column(db.Integer())
 
     @classmethod
-    def create(cls, name: str, address: str, password: str) -> 'TimeFlipDevice':
+    def create(cls, address: str, password: str, name: str = None) -> 'TimeFlipDevice':
         o = cls()
         o.name = name
         o.address = address

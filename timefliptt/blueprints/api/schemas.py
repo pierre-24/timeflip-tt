@@ -68,7 +68,9 @@ class TimeFlipDeviceSchema(BaseSchema):
     id = auto_field(required=True, validate=validate.Range(min=0))
     address = auto_field(required=True, validate=validate_mac)
     password = auto_field(required=True)
-    name = auto_field(required=True, validate=validate.Length(max=19))
+
+    name = auto_field(validate=validate.Length(max=19))
+    calibration = auto_field()
 
 
 class FacetToTaskSchema(BaseSchema):

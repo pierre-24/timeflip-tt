@@ -1,4 +1,5 @@
 import asyncio
+import random
 from datetime import datetime, timedelta
 
 from typing import List, Tuple
@@ -75,12 +76,12 @@ class TimeFlipsView(MethodView):
         """
         return jsonify(timeflip_devices=TimeFlipDeviceSchema(many=True).dump(TimeFlipDevice.query.all()))
 
-    @parser.use_kwargs(TimeFlipDeviceSchema(exclude=('id', )), location='json')
-    def post(self, name: str, address: str, password: str) -> Response:
+    @parser.use_kwargs(TimeFlipDeviceSchema(exclude=('id', 'name', 'calibration')), location='json')
+    def post(self, address: str, password: str) -> Response:
         """Register a new device
         """
 
-        device = TimeFlipDevice.create(name, address, password)
+        device = TimeFlipDevice.create(address, password)
 
         db.session.add(device)
         db.session.commit()
@@ -139,15 +140,19 @@ class TimeFlipHandleView(MethodView):
     """
 
     @staticmethod
-    async def get_info(client: AsyncClient) -> dict:
+    async def get_info(client: AsyncClient, device: TimeFlipDevice) -> dict:
+        calibration = await client.calibration_version()
         return {
             'status': 'ok',
             'address': client.address,
+            'password': device.password,
             'name': await client.device_name(),
             'facet': client.current_facet_value,
             'battery': await client.battery_level(),
             'paused': client.paused,
-            'locked': client.locked
+            'locked': client.locked,
+            'calibration': calibration,
+            'calibration_ok': calibration == device.calibration
         }
 
     @parser.use_args(TimeFlipView.TimeFlipDeviceSimpleSchema, location='view_args')
@@ -160,21 +165,40 @@ class TimeFlipHandleView(MethodView):
                 flask.abort(403)
 
             try:
-                data = run_coro(self.get_info)
-                return jsonify(data)
+                return jsonify(run_coro(self.get_info, device=device))
             except (TimeFlipRuntimeError, BleakError) as e:
                 return jsonify(status='ko', error=str(e))
         else:
             flask.abort(404)
 
+    @staticmethod
+    async def setup_new_timeflip(client: AsyncClient) -> Tuple[str, int]:
+        """Fetch name and set calibration of device"""
+
+        name = await client.device_name()
+        calibration = random.randrange(1, 2 ** 32 - 1)  # cannot be zero!
+        await client.set_calibration_version(calibration)
+
+        return name, calibration
+
     @parser.use_args(TimeFlipView.TimeFlipDeviceSimpleSchema, location='view_args')
     def post(self, device: TimeFlipDevice, id: int) -> Response:
-        """Connect to the device"""
+        """Connect to the device. If it is the first time, fetch its name and set a calibration
+        """
 
         if device is not None:
             try:
                 hard_connect(device.address, device.password)
-                return jsonify(status='ok')
+
+                if device.name is None:
+                    name, calibration = run_coro(self.setup_new_timeflip)
+                    device.name = name
+                    device.calibration = calibration
+
+                    db.session.add(device)
+                    db.session.commit()
+
+                return jsonify(run_coro(self.get_info, device=device))
             except (TimeFlipRuntimeError, BleakError) as e:
                 return jsonify(status='ko', error=str(e))
         else:
@@ -208,13 +232,13 @@ class TimeFlipHandleView(MethodView):
                     device.password = kwargs['password']
                     run_coro(self.set_new_password, password=device.password)
                     soft_connect(device.address, kwargs['password'])
+
+                db.session.add(device)
+                db.session.commit()
+
+                return jsonify(run_coro(self.get_info, device=device))
             except (BleakError, TimeFlipRuntimeError) as e:
                 return jsonify(status='ko', error=str(e))
-
-            db.session.add(device)
-            db.session.commit()
-
-            return jsonify(status='ok')
         else:
             flask.abort(404)
 
