@@ -53,7 +53,7 @@ class CategoryView(MethodView):
         if category is not None:
             return jsonify(CategorySchema().dump(category))
         else:
-            flask.abort(404)
+            flask.abort(404, description='Unknown category with id={}'.format(id))
 
     @parser.use_args(CategorySimpleSchema, location='view_args')
     @parser.use_kwargs(TaskSchema(exclude=('id', 'category')), location='json')
@@ -62,7 +62,7 @@ class CategoryView(MethodView):
         """
 
         if category is None:
-            flask.abort(404)
+            flask.abort(404, description='Unknown category with id={}'.format(id))
 
         task = Task.create(name, category, color)
         db.session.add(task)
@@ -84,7 +84,7 @@ class CategoryView(MethodView):
 
             return jsonify(CategorySchema().dump(category))
         else:
-            flask.abort(404)
+            flask.abort(404, description='Unknown category with id={}'.format(id))
 
     @parser.use_args(CategorySimpleSchema, location='view_args')
     def delete(self, category: Category, id: int) -> Response:
@@ -101,7 +101,7 @@ class CategoryView(MethodView):
             db.session.commit()
             return jsonify(status='ok')
         else:
-            flask.abort(404)
+            flask.abort(404, description='Unknown category with id={}'.format(id))
 
 
 blueprint.add_url_rule('/api/categories/<int:id>/', view_func=CategoryView.as_view('category'))
@@ -132,7 +132,7 @@ class TaskView(MethodView):
         if task is not None:
             return jsonify(TaskSchema().dump(task))
         else:
-            flask.abort(404)
+            flask.abort(404, description='Unknown task with id={}'.format(id))
 
     @parser.use_args(TaskSimpleSchema, location='view_args')
     @parser.use_kwargs(TaskSchema(exclude=('id', )), location='json')
@@ -150,11 +150,11 @@ class TaskView(MethodView):
 
             return jsonify(TaskSchema().dump(task))
         else:
-            flask.abort(404)
+            flask.abort(404, description='Unknown task with id={}'.format(id))
 
     @parser.use_args(TaskSimpleSchema, location='view_args')
     def delete(self, task: Task, id: int) -> Response:
-        """Delete an existing taskk
+        """Delete an existing task
         """
 
         if task is not None:
@@ -162,7 +162,7 @@ class TaskView(MethodView):
             db.session.commit()
             return jsonify(status='ok')
         else:
-            flask.abort(404)
+            flask.abort(404, description='Unknown task with id={}'.format(id))
 
 
 blueprint.add_url_rule('/api/tasks/<int:id>/', view_func=TaskView.as_view('task'))

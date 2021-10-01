@@ -116,7 +116,7 @@ class TimeFlipView(MethodView):
         if device is not None:
             return jsonify(TimeFlipDeviceSchema().dump(device))
         else:
-            flask.abort(404)
+            flask.abort(404, description='Unknown TimeFlip with id={}'.format(id))
 
     @parser.use_args(TimeFlipDeviceSimpleSchema, location='view_args')
     def delete(self, device: TimeFlipDevice, id: int) -> Response:
@@ -128,7 +128,7 @@ class TimeFlipView(MethodView):
             db.session.commit()
             return jsonify(status='ok')
         else:
-            flask.abort(404)
+            flask.abort(404, description='Unknown TimeFlip with id={}'.format(id))
 
 
 blueprint.add_url_rule('/api/timeflips/<int:id>/', view_func=TimeFlipView.as_view('timeflip'))
@@ -162,14 +162,14 @@ class TimeFlipHandleView(MethodView):
 
         if device is not None:
             if not connected_to(device.address):
-                flask.abort(403)
+                flask.abort(403, description='Not connected to TimeFlip with id={}'.format(device.id))
 
             try:
                 return jsonify(run_coro(self.get_info, device=device))
             except (TimeFlipRuntimeError, BleakError) as e:
                 return jsonify(status='ko', error=str(e))
         else:
-            flask.abort(404)
+            flask.abort(404, description='Unknown TimeFlip with id={}'.format(id))
 
     @staticmethod
     async def setup_new_timeflip(client: AsyncClient) -> Tuple[str, int]:
@@ -202,7 +202,7 @@ class TimeFlipHandleView(MethodView):
             except (TimeFlipRuntimeError, BleakError) as e:
                 return jsonify(status='ko', error=str(e))
         else:
-            flask.abort(404)
+            flask.abort(404, description='Unknown TimeFlip with id={}'.format(id))
 
     @staticmethod
     async def set_new_password(client: AsyncClient, password: str):
@@ -221,7 +221,7 @@ class TimeFlipHandleView(MethodView):
 
         if device is not None:
             if not connected_to(device.address):
-                flask.abort(403)
+                flask.abort(403, description='Not connected to TimeFlip with id={}'.format(device.id))
 
             try:
                 if 'name' in kwargs:
@@ -240,7 +240,7 @@ class TimeFlipHandleView(MethodView):
             except (BleakError, TimeFlipRuntimeError) as e:
                 return jsonify(status='ko', error=str(e))
         else:
-            flask.abort(404)
+            flask.abort(404, description='Unknown TimeFlip with id={}'.format(id))
 
 
 blueprint.add_url_rule('/api/timeflips/<int:id>/handle', view_func=TimeFlipHandleView.as_view('timeflip-handle'))
@@ -259,7 +259,7 @@ class FacetsView(MethodView):
                     FacetToTask.query.filter(FacetToTask.timeflip_device_id.is_(device.id)).all()
                 ))
         else:
-            flask.abort(404)
+            flask.abort(404, description='Unknown TimeFlip with id={}'.format(id))
 
 
 blueprint.add_url_rule('/api/timeflips/<int:id>/facets/', view_func=FacetsView.as_view('timeflip-facets'))
@@ -308,7 +308,7 @@ class FacetView(MethodView):
         if ftt is not None:
             return jsonify(FacetToTaskSchema(exclude=('id', )).dump(ftt))
         else:
-            flask.abort(404)
+            flask.abort(404, description='Not task associated with facet={}'.format(facet))
 
     @parser.use_kwargs(DeviceAndFacetSchema, location='view_args')
     @parser.use_kwargs(TaskSimpleSchema, location='json')
@@ -332,7 +332,7 @@ class FacetView(MethodView):
 
             return jsonify(FacetToTaskSchema(exclude=('timeflip_device', 'id')).dump(ftt))
         else:
-            flask.abort(404)
+            flask.abort(404, description='Unknown TimeFlip with id={}'.format(id))
 
     @parser.use_kwargs(SimpleFacetToTaskSchema, location='view_args')
     def delete(self, id: int, facet: int, ftt: FacetToTask):
@@ -345,7 +345,7 @@ class FacetView(MethodView):
 
             return jsonify(status='ok')
         else:
-            flask.abort(404)
+            flask.abort(404, description='Not task associated with facet={}'.format(facet))
 
 
 blueprint.add_url_rule('/api/timeflips/<int:id>/facets/<int:facet>/', view_func=FacetView.as_view('timeflip-facet'))
@@ -368,7 +368,7 @@ class TimeFlipHistoryView(MethodView):
 
         if device is not None:
             if not connected_to(device.address):
-                flask.abort(403)
+                flask.abort(403, description='Not connected to TimeFlip with id={}'.format(device.id))
 
             # get corresponding task
             ftts = FacetToTask.query.filter(FacetToTask.timeflip_device_id.is_(device.id)).all()
@@ -408,7 +408,7 @@ class TimeFlipHistoryView(MethodView):
                 ).dump(history_elements)
             )
         else:
-            raise flask.abort(404)
+            flask.abort(404, description='Unknown TimeFlip with id={}'.format(id))
 
 
 blueprint.add_url_rule('/api/timeflips/<int:id>/history', view_func=TimeFlipHistoryView.as_view('timeflip-history'))

@@ -81,7 +81,7 @@ class HistoryElementsView(MethodView):
             if 'task' in kwargs:
                 task = Task.query.get(kwargs.get('task'))
                 if task is None:
-                    flask.abort(404)
+                    flask.abort(404, description='Unknown task with id={}'.format(kwargs.get('task')))
 
                 for element in elements:
                     element.task_id = task.id
@@ -95,7 +95,7 @@ class HistoryElementsView(MethodView):
             db.session.commit()
             return jsonify(HistoryElementSchema(many=True).dump(elements))
         else:
-            flask.abort(404)
+            flask.abort(404, description='Unknown elements')
 
     @parser.use_args(SimpleHistoryElementsSchema, location='query')
     def delete(self, elements: List[HistoryElement], **kwargs) -> Response:
@@ -106,7 +106,7 @@ class HistoryElementsView(MethodView):
             db.session.commit()
             return jsonify(status='ok')
         else:
-            flask.abort(404)
+            flask.abort(404, description='Unknown elements')
 
 
 blueprint.add_url_rule('/api/history/', view_func=HistoryElementsView.as_view('history-els'))
@@ -126,7 +126,7 @@ class HistoryElementView(MethodView):
         if element is not None:
             return jsonify(HistoryElementSchema().dump(element))
         else:
-            flask.abort(404)
+            flask.abort(404, description='Unknown element with id={}'.format(id))
 
     class ModifyHistorySchema(Schema):
         task = fields.Integer(validate=validate.Range(min=0))
@@ -141,7 +141,7 @@ class HistoryElementView(MethodView):
             if 'task' in kwargs:
                 task = Task.query.get(kwargs.get('task'))
                 if task is None:
-                    flask.abort(404)
+                    flask.abort(404, description='Unknown task with id={}'.format(kwargs.get('task')))
 
                 element.task_id = task.id
 
@@ -154,7 +154,7 @@ class HistoryElementView(MethodView):
             db.session.commit()
             return jsonify(HistoryElementSchema().dump(element))
         else:
-            flask.abort(404)
+            flask.abort(404, description='Unknown element with id={}'.format(id))
 
     @parser.use_args(SimpleHistoryElementSchema, location='view_args')
     def delete(self, element: HistoryElement, id: int) -> Response:
@@ -163,7 +163,7 @@ class HistoryElementView(MethodView):
             db.session.commit()
             return jsonify(status='ok')
         else:
-            flask.abort(404)
+            flask.abort(404, description='Unknown element with id={}'.format(id))
 
 
 blueprint.add_url_rule('/api/history/<int:id>/', view_func=HistoryElementView.as_view('history-el'))
