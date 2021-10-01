@@ -24,6 +24,7 @@ class HistoryElementsView(MethodView):
     class PaginateSchema(Schema):
         page = fields.Integer(validate=validate.Range(min=0))
         page_size = fields.Integer(validate=validate.Range(min=0))
+        timeflip = fields.Integer(validate=validate.Range(min=0))
 
     @parser.use_kwargs(PaginateSchema, location='query')
     def get(self, **kwargs) -> Response:
@@ -33,16 +34,18 @@ class HistoryElementsView(MethodView):
         page = kwargs.get('page', 0)
         page_size = kwargs.get('page_size', self.PAGE_SIZE)
 
-        num_results = HistoryElement.query.count()
+        query = HistoryElement\
+            .query\
+            .order_by(HistoryElement.id.desc())
 
+        if 'timeflip' in kwargs:
+            query = query.filter(HistoryElement.timeflip_device_id.is_(kwargs.get('timeflip')))
+
+        num_results = query.count()
         if page < 0 or page * page_size > num_results:
             flask.abort(404)
 
-        results = HistoryElement\
-            .query\
-            .order_by(HistoryElement.id.desc())\
-            .slice(page * page_size, (page + 1) * page_size)\
-            .all()
+        results = query.slice(page * page_size, (page + 1) * page_size).all()
 
         FORMAT = '{}?page={}&page_size={}'
 
@@ -50,7 +53,7 @@ class HistoryElementsView(MethodView):
         if page > 0:
             previous_page = FORMAT.format(flask.url_for('api.history-els'), page - 1, page_size)
         next_page = None
-        if (page + 1) * page_size < num_results:
+        if num_results > 0 and (page + 1) * page_size < num_results:
             next_page = FORMAT.format(flask.url_for('api.history-els'), page + 1, page_size)
 
         return jsonify(

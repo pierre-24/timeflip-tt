@@ -134,6 +134,20 @@ class HistoryTestCase(FlaskTestCase):
         self.assertEqual(len(elmts(self.num_elements + 1, 1, expected_status=404)), 0)
         self.assertEqual(len(elmts(-2, 1, expected_status=422)), 0)
 
+    def test_get_history_elements_timeflip_ok(self):
+        self.assertEqual(self.num_elements, HistoryElement.query.count())
+
+        response = self.client.get(flask.url_for('api.history-els') + '?timeflip={}'.format(self.device.id))
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertEqual(self.num_elements, data['total_elements'])
+
+        response = self.client.get(
+            flask.url_for('api.history-els') + '?timeflip={}'.format(TimeFlipDevice.query.count() + 1))
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertEqual(0, data['total_elements'])
+
     def test_get_history_element_ok(self):
         self.assertEqual(self.num_elements, HistoryElement.query.count())
         element = self.elements[0]
