@@ -10,7 +10,9 @@ Install:
 pip install --upgrade git+https://github.com/pierre-24/timeflip-tt.git
 ```
 
+Use:
+
 ```bash
-timeflip-tt -I  # create the config + database
-timeflip-tt -i config.yml  # launch the application + webserver
+timeflip-tt -I  # create the database
+timeflip-tt # launch the application + webserver
 ```
