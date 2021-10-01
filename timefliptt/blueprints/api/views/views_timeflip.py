@@ -17,7 +17,7 @@ from asyncio import TimeoutError
 
 from timefliptt.app import db
 from timefliptt.blueprints.api.views import blueprint
-from timefliptt.timeflip import run_coro, connected_to, hard_connect, hard_logout, soft_connect
+from timefliptt.timeflip import run_coro, connected_to, hard_connect, hard_logout, soft_connect, daemon_status
 from timefliptt.blueprints.base_models import TimeFlipDevice, FacetToTask, Task, HistoryElement
 from timefliptt.blueprints.api.schemas import TimeFlipDeviceSchema, Parser, FacetToTaskSchema, HistoryElementSchema
 
@@ -88,6 +88,17 @@ class TimeFlipsView(MethodView):
 
         return TimeFlipDeviceSchema().dump(device)
 
+
+blueprint.add_url_rule('/api/timeflips/', view_func=TimeFlipsView.as_view('timeflips'))
+
+
+class TimeFlipConnectionView(MethodView):
+    def get(self) -> Response:
+        """See the status of the daemon
+        """
+
+        return jsonify(status='ok', daemon_status=daemon_status())
+
     def delete(self) -> Response:
         """Disconnect from any device
         """
@@ -96,7 +107,7 @@ class TimeFlipsView(MethodView):
         return jsonify(status='ok')
 
 
-blueprint.add_url_rule('/api/timeflips/', view_func=TimeFlipsView.as_view('timeflips'))
+blueprint.add_url_rule('/api/timeflips/daemon', view_func=TimeFlipConnectionView.as_view('timeflips-daemon'))
 
 
 class TimeFlipView(MethodView):

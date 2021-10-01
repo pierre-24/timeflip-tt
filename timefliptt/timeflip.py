@@ -53,6 +53,18 @@ def daemon_stop():
             _thread = None
 
 
+def daemon_status():
+    global _loop, _lock, _timeflip_address
+
+    with _lock:
+        if _loop is None:
+            return 'Stopped'
+        elif _timeflip_address == '':
+            return 'Disconnected'
+        else:
+            return 'Connected to {}'.format(_timeflip_address)
+
+
 def soft_connect(address: str, password: str):
     """Setup everything so that it will connect at next request
     """
