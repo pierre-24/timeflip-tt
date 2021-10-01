@@ -1,5 +1,7 @@
 import math
 
+from typing import List
+
 import flask
 from flask import jsonify, Response
 from flask.views import MethodView
@@ -60,6 +62,51 @@ class HistoryElementsView(MethodView):
             next_page=next_page,
             history=HistoryElementSchema(many=True).dump(results)
         )
+
+    class SimpleHistoryElementsSchema(Schema):
+        id = fields.List(fields.Integer(validate=validate.Range(min=0)))
+
+        @post_load
+        def make_objects(self, data, **kwargs):
+            return HistoryElement.query.filter(HistoryElement.id.in_(data['id'])).all()
+
+    class ModifyHistorySchema(Schema):
+        task = fields.Integer(validate=validate.Range(min=0))
+        comment = fields.Str()
+
+    @parser.use_args(SimpleHistoryElementsSchema, location='query')
+    @parser.use_kwargs(ModifyHistorySchema, location='json')
+    def put(self, elements: List[HistoryElement], **kwargs) -> Response:
+        if len(elements) > 0:
+            if 'task' in kwargs:
+                task = Task.query.get(kwargs.get('task'))
+                if task is None:
+                    flask.abort(404)
+
+                for element in elements:
+                    element.task_id = task.id
+                    db.session.add(element)
+
+            if 'comment' in kwargs:
+                for element in elements:
+                    element.comment = kwargs.get('comment')
+                    db.session.add(element)
+
+            db.session.commit()
+            return jsonify(HistoryElementSchema(many=True).dump(elements))
+        else:
+            flask.abort(404)
+
+    @parser.use_args(SimpleHistoryElementsSchema, location='query')
+    def delete(self, elements: List[HistoryElement], **kwargs) -> Response:
+        if len(elements) > 0:
+            for e in elements:
+                db.session.delete(e)
+
+            db.session.commit()
+            return jsonify(status='ok')
+        else:
+            flask.abort(404)
 
 
 blueprint.add_url_rule('/api/history/', view_func=HistoryElementsView.as_view('history-els'))

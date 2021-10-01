@@ -218,3 +218,63 @@ class HistoryTestCase(FlaskTestCase):
         self.assertEqual(response.status_code, 404)
 
         self.assertEqual(self.num_elements, HistoryElement.query.count())
+
+    def test_delete_history_elements_batch_ok(self):
+        self.assertEqual(self.num_elements, HistoryElement.query.count())
+        elements = self.elements[0:2]
+
+        response = self.client.delete(
+            flask.url_for('api.history-els') + '?' + '&'.join('id={}'.format(e.id) for e in elements))
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(self.num_elements - len(elements), HistoryElement.query.count())
+        for e in elements:
+            self.assertIsNone(HistoryElement.query.get(e.id))
+
+    def test_delete_unknown_history_elements_batch_ko(self):
+        self.assertEqual(self.num_elements, HistoryElement.query.count())
+
+        response = self.client.delete(flask.url_for('api.history-els') + '?id={}'.format(self.num_elements + 1))
+        self.assertEqual(response.status_code, 404)
+
+        self.assertEqual(self.num_elements, HistoryElement.query.count())
+
+    def test_modify_history_elements_batch_ok(self):
+        self.assertEqual(self.num_elements, HistoryElement.query.count())
+        elements = self.elements[0:2]
+
+        comment = 'whatever'
+        task = self.task
+
+        response = self.client.put(
+            flask.url_for('api.history-els') + '?' + '&'.join('id={}'.format(e.id) for e in elements), json={
+                'comment': comment,
+                'task': task.id
+            })
+        self.assertEqual(response.status_code, 200)
+
+        data = response.get_json()
+        for element in data:
+            self.assertEqual(comment, element['comment'])
+            self.assertEqual(task.id, element['task']['id'])
+
+        for element in elements:
+            e = HistoryElement.query.get(element.id)
+            self.assertEqual(comment, e.comment)
+            self.assertEqual(task.id, e.task_id)
+
+    def test_modify_unknown_history_elements_batch_ko(self):
+        self.assertEqual(self.num_elements, HistoryElement.query.count())
+
+        response = self.client.put(flask.url_for('api.history-els') + '?id={}'.format(self.num_elements + 1))
+        self.assertEqual(response.status_code, 404)
+
+    def test_modify_history_elements_batch_unknown_task_ko(self):
+        self.assertEqual(self.num_elements, HistoryElement.query.count())
+        elements = self.elements[0:2]
+
+        response = self.client.put(
+            flask.url_for('api.history-els') + '?' + '&'.join('id={}'.format(e.id) for e in elements), json={
+                'task': Task.query.count() + 1
+            })
+        self.assertEqual(response.status_code, 404)
