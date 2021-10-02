@@ -1,6 +1,6 @@
 from datetime import datetime, date, timedelta
 
-from typing import Tuple, List
+from typing import Tuple, List, ClassVar, Any, Hashable
 
 from flask import jsonify, Response
 from flask.views import MethodView
@@ -9,32 +9,14 @@ from webargs import fields
 from marshmallow import Schema, validate, validates_schema, ValidationError
 
 from timefliptt.blueprints.api.views import blueprint
-from timefliptt.blueprints.api.schemas import Parser, TaskSchema
+from timefliptt.blueprints.api.schemas import Parser, TaskSchema, CategorySchema, TimeFlipDeviceSchema
 from timefliptt.blueprints.base_models import HistoryElement, Task
 
 
 parser = Parser()
 
 
-class CumulativeView(MethodView):
-
-    class FilterStatSchema(Schema):
-        start = fields.DateTime()
-        start_date = fields.Date()
-        end = fields.DateTime()
-        end_date = fields.Date()
-
-        task = fields.List(fields.Integer(validate=validate.Range(min=0)))
-        timeflip = fields.List(fields.Integer(validate=validate.Range(min=0)))
-        category = fields.List(fields.Integer(validate=validate.Range(min=0)))
-
-        @validates_schema
-        def exclusive_date(self, data, **kwargs):
-            if 'start' in data and 'start_date' in data:
-                raise ValidationError('cannot define both start and start_date', 'start')
-
-            if 'end' in data and 'end_date' in data:
-                raise ValidationError('cannot define both end and end_date', 'end')
+class BaseStatisticalView:
 
     @staticmethod
     def query_elements(**kwargs) -> Tuple[List[HistoryElement], Tuple[datetime, datetime]]:
@@ -62,7 +44,7 @@ class CumulativeView(MethodView):
         if end < start:
             start, end = end, start
 
-        query = query.filter(HistoryElement.end >= start).filter(HistoryElement.start <= end)
+        query = query.filter(HistoryElement.end > start).filter(HistoryElement.start < end)
 
         # -- Timeflips
         if 'timeflip' in kwargs:
@@ -78,30 +60,116 @@ class CumulativeView(MethodView):
 
         return query.all(), (start, end)
 
+
+class BaseCumulativeView(BaseStatisticalView, MethodView):
+
+    object_schema: ClassVar[Schema]
+    objects_name = 'tasks'
+
+    def discriminate(self, x: HistoryElement) -> Tuple[Hashable, Any]:
+        raise NotImplementedError()
+
+    class FilterStatSchema(Schema):
+        start = fields.DateTime()
+        start_date = fields.Date()
+        end = fields.DateTime()
+        end_date = fields.Date()
+
+        task = fields.List(fields.Integer(validate=validate.Range(min=0)))
+        timeflip = fields.List(fields.Integer(validate=validate.Range(min=0)))
+        category = fields.List(fields.Integer(validate=validate.Range(min=0)))
+
+        @validates_schema
+        def exclusive_date(self, data, **kwargs):
+            if 'start' in data and 'start_date' in data:
+                raise ValidationError('cannot define both start and start_date', 'start')
+
+            if 'end' in data and 'end_date' in data:
+                raise ValidationError('cannot define both end and end_date', 'end')
+
     @parser.use_kwargs(FilterStatSchema, location='query')
     def get(self, **kwargs) -> Response:
         """Get cumulative time for each task in a given time frame
         """
 
         elements, (start, end) = self.query_elements(**kwargs)
-        tasks = {}
+        schemas = {}
         cumulative_time = 0
 
         for element in elements:
-            if element.task_id not in tasks:
-                tasks[element.task_id] = TaskSchema().dump(element.task)
-                tasks[element.task_id]['cumulative_time'] = 0
+            try:
+                discriminant, obj = self.discriminate(element)
+            except ValueError:
+                continue
+
+            if discriminant not in schemas:
+                schemas[discriminant] = self.object_schema().dump(obj)
+                schemas[discriminant]['cumulative_time'] = 0
 
             duration = element.duration(start, end)
-            tasks[element.task_id]['cumulative_time'] = duration
+            schemas[discriminant]['cumulative_time'] += duration
             cumulative_time += duration
 
-        return jsonify(
-            start=start.isoformat(),
-            end=end.isoformat(),
-            tasks=list(tasks.values()),
-            cumulative_time=cumulative_time
-        )
+        return jsonify(**{
+            'start': start.isoformat(),
+            'end': end.isoformat(),
+            self.objects_name: list(schemas.values()),
+            'cumulative_time': cumulative_time
+        })
 
 
-blueprint.add_url_rule('/api/statistics/cumulative/', view_func=CumulativeView.as_view('statistics-cumulative'))
+class CumulativeTaskView(BaseCumulativeView):
+
+    objects_name = 'tasks'
+    object_schema = TaskSchema
+
+    def discriminate(self, x: HistoryElement) -> Tuple[Hashable, Any]:
+        if x.task_id is not None:
+            return x.task_id, x.task
+        else:
+            raise ValueError('x.task_id')
+
+
+blueprint.add_url_rule(
+    '/api/statistics/cumulative/tasks/',
+    view_func=CumulativeTaskView.as_view('statistics-cumulative-tasks')
+)
+
+
+class CumulativeCategoriesView(BaseCumulativeView):
+
+    objects_name = 'categories'
+    object_schema = CategorySchema
+
+    def discriminate(self, x: HistoryElement) -> Tuple[Hashable, Any]:
+        if x.task_id is not None:
+            return x.task.category_id, x.task.category
+        else:
+            raise ValueError('x.task_id')
+
+
+blueprint.add_url_rule(
+    '/api/statistics/cumulative/categories/',
+    view_func=CumulativeCategoriesView.as_view('statistics-cumulative-categories')
+)
+
+
+class CumulativeTimeflipsView(BaseCumulativeView):
+
+    objects_name = 'timeflip_devices'
+    object_schema = TimeFlipDeviceSchema
+
+    def discriminate(self, x: HistoryElement) -> Tuple[Hashable, Any]:
+        """Even though elements are defined without task, only count the ones with one
+        """
+
+        if x.task_id is not None:
+            return x.timeflip_device_id, x.timeflip_device
+        else:
+            raise ValueError('x.task_id')
+
+
+blueprint.add_url_rule(
+    '/api/statistics/cumulative/timeflips/',
+    view_func=CumulativeTimeflipsView.as_view('statistics-cumulative-timeflips')
+)
