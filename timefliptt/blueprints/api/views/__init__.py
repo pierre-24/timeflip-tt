@@ -26,4 +26,4 @@ def handle_error_s(err: Union[NotFound, Forbidden]):
     return flask.jsonify(description=err.description), err.code
 
 
-from timefliptt.blueprints.api.views import views_timeflip, views_tasks, views_history  # noqa
+from timefliptt.blueprints.api.views import views_timeflip, views_tasks, views_history, views_statistics  # noqa
