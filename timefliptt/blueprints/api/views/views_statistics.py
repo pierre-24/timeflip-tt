@@ -245,6 +245,10 @@ class BasePeriodicView(BaseStatisticalView, MethodView):
         for i in range(num_periods):
             periodic_schemas[i][self.objects_name] = list(accumulator[i].values())
 
+            # convert date to isoformat
+            periodic_schemas[i]['start'] = periodic_schemas[i]['start'].isoformat()
+            periodic_schemas[i]['end'] = periodic_schemas[i]['end'].isoformat()
+
         return jsonify(**{
             'start': start.isoformat(),
             'end': end.isoformat(),

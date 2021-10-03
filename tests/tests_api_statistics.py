@@ -1,4 +1,5 @@
 import random
+import math
 from datetime import datetime, timedelta
 from tests import FlaskTestCase
 
@@ -44,8 +45,8 @@ class CumulativeTestCase(FlaskTestCase):
             end = start + delta
             task = self.tasks[random.randrange(self.num_tasks)]
 
-            self.cumulative_time_task[task.id] += delta.seconds
-            self.cumulative_time_category[task.category_id] += delta.seconds
+            self.cumulative_time_task[task.id] += delta.total_seconds()
+            self.cumulative_time_category[task.category_id] += delta.total_seconds()
 
             element = HistoryElement.create(start, end, random.randrange(0, 63), self.device, task)
             self.db_session.add(element)
@@ -255,3 +256,80 @@ class CumulativeTestCase(FlaskTestCase):
 
         # total cumulative time matches
         self.assertEqual(sum(self.cumulative_time_category), data['cumulative_time'])
+
+
+class PeriodicTestCase(FlaskTestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.device = TimeFlipDevice.create('00:00:00:00:00:00', '000000')
+        self.db_session.add(self.device)
+
+        self.category = Category.create('cat')
+        self.db_session.add(self.category)
+
+        self.db_session.commit()
+
+        self.num_tasks = 10
+        self.tasks = []
+        for i in range(self.num_tasks):
+            task = Task.create('x{}'.format(i), self.category, '#000000')
+            self.db_session.add(task)
+            self.tasks.append(task)
+
+        self.db_session.commit()
+
+        num_elements = 20
+        times = random.sample(range(1, 2 * num_elements), num_elements)
+        self.elements = []
+        self.end = datetime.now()
+        self.start = self.end - timedelta(minutes=sum(times))
+        start = self.start
+        delta = timedelta(minutes=1)
+        for i in range(num_elements):
+            end = start + times[i] * delta
+            task = self.tasks[random.randrange(self.num_tasks)]
+
+            element = HistoryElement.create(start, end, random.randrange(0, 63), self.device, task)
+            self.db_session.add(element)
+            self.elements.append(element)
+            start = end
+
+        self.time_per_tasks = times
+        self.db_session.commit()
+
+        self.num_elements = HistoryElement.query.count()
+
+    def test_periodic_tasks(self):
+        def cumulative_tasks(start, end: str):
+            """For simplicity, I use the cumulative interface as reference (tested above)
+            """
+
+            response = self.client.get(
+                flask.url_for('api.statistics-cumulative-tasks') + '?start={}&end={}'.format(start, end))
+            self.assertEqual(response.status_code, 200)
+            return response.get_json()
+
+        period = 525
+        response = self.client.get(
+            flask.url_for('api.statistics-periodic-tasks', period=period) + '?start={}&end={}'.format(
+                self.start.isoformat(), self.end.isoformat())
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+
+        self.assertEqual((self.end - self.start).total_seconds(), data['cumulative_time'])
+        expected_num_periods = int(math.ceil((self.end - self.start).total_seconds() / period))
+        self.assertEqual(len(data['periods']), expected_num_periods)
+
+        for period in data['periods']:
+            reference = cumulative_tasks(period['start'], period['end'])
+            self.assertEqual(reference['cumulative_time'], period['cumulative_time'])  # times match
+
+            reference_task_time = dict((t['id'], t['cumulative_time']) for t in reference['tasks'])
+            actual_task_time = dict((t['id'], t['cumulative_time']) for t in period['tasks'])
+
+            for i in reference_task_time:
+                self.assertIn(i, actual_task_time)  # the task is there...
+                self.assertEqual(reference_task_time[i], actual_task_time[i])  # ... with the same cumulative time!
