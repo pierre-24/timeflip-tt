@@ -223,9 +223,25 @@ class TimeFlipHandleView(MethodView):
     async def set_new_name(client: AsyncClient, name: str):
         await client.set_name(name)
 
+    @staticmethod
+    async def set_new_calibration(client: AsyncClient, prev_calibration: int) -> int:
+        """set calibration of device"""
+        calibration = prev_calibration
+
+        while calibration == prev_calibration:
+            calibration = random.randrange(1, 2 ** 32 - 1)  # cannot be zero!
+
+        await client.set_calibration_version(calibration)
+
+        return calibration
+
     @parser.use_args(TimeFlipView.TimeFlipDeviceSimpleSchema, location='view_args')
     @parser.use_kwargs(
-        {'name': fields.Str(), 'password': fields.Str(validate=validate.Length(equal=6))}, location='json')
+        {
+            'name': fields.Str(),
+            'password': fields.Str(validate=validate.Length(equal=6)),
+            'change_calibration': fields.Bool()
+        }, location='json')
     def put(self, device: TimeFlipDevice, **kwargs) -> Response:
         """Modify device
         """
@@ -243,6 +259,10 @@ class TimeFlipHandleView(MethodView):
                     device.password = kwargs['password']
                     run_coro(self.set_new_password, password=device.password)
                     soft_connect(device.address, kwargs['password'])
+
+                if 'change_calibration' in kwargs:
+                    new_calibration = run_coro(self.set_new_calibration, prev_calibration=device.calibration)
+                    device.calibration = new_calibration
 
                 db.session.add(device)
                 db.session.commit()
@@ -365,6 +385,10 @@ blueprint.add_url_rule('/api/timeflips/<int:id>/facets/<int:facet>/', view_func=
 class TimeFlipHistoryView(MethodView):
 
     @staticmethod
+    async def get_calibration(client: AsyncClient) -> int:
+        return await client.calibration_version()
+
+    @staticmethod
     async def get_history(client: AsyncClient, delete: bool = True) -> List[Tuple[int, int, bytearray]]:
         history = await client.history()
         if delete:
@@ -373,13 +397,22 @@ class TimeFlipHistoryView(MethodView):
         return history
 
     @parser.use_args(TimeFlipView.TimeFlipDeviceSimpleSchema, location='view_args')
-    def get(self, device: TimeFlipDevice, id: int) -> Response:
+    def post(self, device: TimeFlipDevice, id: int) -> Response:
         """Get history. Note that it is deleted by default on the host device.
         """
 
         if device is not None:
             if not connected_to(device.address):
                 flask.abort(403, description='Not connected to TimeFlip with id={}'.format(device.id))
+
+            # check calibration
+            try:
+                calibration = run_coro(self.get_calibration)
+            except (BleakError, TimeFlipRuntimeError) as e:
+                return jsonify(status='ko', error=str(e))
+
+            if calibration != device.calibration:
+                flask.abort(403, description='Calibration does not match')
 
             # get corresponding task
             ftts = FacetToTask.query.filter(FacetToTask.timeflip_device_id.is_(device.id)).all()
