@@ -138,4 +138,4 @@ class HistoryElement(BaseModel):
         if start > self.end or end < self.start:
             return 0
         else:
-            return (min(end, self.end) - max(start, self.start)).seconds
+            return int((min(end, self.end) - max(start, self.start)).total_seconds())
