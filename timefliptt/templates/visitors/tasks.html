@@ -11,9 +11,11 @@
         <div class="col-sm-6">
             <div class="card mb-4">
                 <div class="card-body">
-                    <h5 class="card-title d-flex justify-content-between">
-                        {{ categories[category_id].name }}
-                    </h5>
+                    <h5 class="card-title d-flex justify-content-between"
+                        data-controller="category"
+                        data-action="dblclick->category#edit"
+                        data-category-target="name"
+                        data-category-id-value="{{ category_id }}">{{ categories[category_id].name }}</h5>
 
                     <p class="task-pills">
                         {%  if category_id in tasks_per_category %}
@@ -31,4 +33,16 @@
     {% endfor %}
     </div>
 
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+
+    <script type="module">
+    import { Application} from "https://unpkg.com/@hotwired/stimulus@3.0.0/dist/stimulus.js";
+    window.Stimulus = Application.start();
+
+    import CategoryController from "{{ url_for('static', filename='controllers/category_controller.js') }}";
+    Stimulus.register("category", CategoryController);
+    </script>
 {% endblock %}
