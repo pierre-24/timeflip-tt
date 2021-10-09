@@ -8,20 +8,21 @@
 
     <template id="tp-category">
         <div class="col-sm-4">
-        <div class="card mb-4">
-            <div class="card-body">
-                <h5 class="card-title" data-controller="category" data-action="dblclick->category#edit">
-                    <span class="category-label" data-category-target="label"></span>
-                    <input type="text" data-category-target="input" value="" hidden data-action="change->category#update keyup->category#keyup" />
-                </h5>
+            <div class="card mb-4">
+                <div class="card-body" data-controller="category" data-action="dblclick->category#edit">
+                        <h5 class="card-title d-flex justify-content-between">
+                            <span class=" category-label" data-category-target="label"></span>
+                            <button type="button" class="destroy" data-category-target="destroy" data-action="category#destroy"><i class="bi bi-x"></i></button>
+                        </h5>
+                    <input type="text" data-category-target="input" hidden data-action="change->category#update keyup->category#keyup" />
+                </div>
+                <ul class="list-group list-group-flush">
+                </ul>
             </div>
-            <ul class="list-group list-group-flush">
-            </ul>
-        </div>
         </div>
     </template>
 
-    <div data-controller="categories">
+    <div id="categories" data-controller="categories">
 
         <div class="row" data-categories-target="elms"></div>
         <p>

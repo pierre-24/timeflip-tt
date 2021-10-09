@@ -20,6 +20,23 @@ function showToast(title, message) {
     new bootstrap.Toast(document.querySelector('.toast:last-child')).show();
 }
 
+function showModal(title, message, button, action) {
+    let $modal = document.getElementById('generalModal');
+
+    $modal.querySelector('.modal-title').innerHTML = title;
+    $modal.querySelector('.modal-body').innerHTML = message;
+
+    let modal = new bootstrap.Modal($modal);
+    let $action = $modal.querySelector('.action');
+
+    $action.innerHTML = button;
+    $action.addEventListener(
+        'click',
+        (event) => {action(modal, event); },
+        {once: true});
+
+    modal.show();
+}
 
 function apiCall(address, method='get', body= null) {
     let params = {
@@ -62,7 +79,7 @@ export class CategoriesController extends Controller {
         let $cat = document.querySelector('#tp-category').content.cloneNode(true);
 
         // set id and name
-        $cat.querySelectorAll('.card-title')[0].dataset.categoryIdValue = category.id;
+        $cat.querySelectorAll('.card-body')[0].dataset.categoryIdValue = category.id;
         $cat.querySelectorAll('.category-label')[0].innerText = category.name;
 
         // append node
@@ -77,31 +94,54 @@ export class CategoriesController extends Controller {
 }
 
 export class CategoryController extends Controller {
-    static get targets() { return ["label", "input"]; }
+    static get targets() { return ["label", "input", "destroy"]; }
     static get values() { return {id: Number}; }
 
     edit() {
-        this.labelTarget.hidden = true;
-        this.inputTarget.hidden = false;
+        this.startEdit();
         this.inputTarget.value = this.labelTarget.innerText;
+        this.inputTarget.focus();
     }
 
     update() {
         apiCall(`categories/${this.idValue}/`, 'put', {'name': this.inputTarget.value})
         .then((data) => {
-            this.cancel();
+            this.stopEdit();
             this.labelTarget.innerText = data.name;
         });
     }
 
-    cancel() {
-        this.labelTarget.hidden = false;
-        this.inputTarget.hidden = true;
-    }
-
     keyup(event) {
         if (event.keyCode === ESC_KEY) {
-            this.cancel();
+            this.stopEdit();
         }
+    }
+
+    destroy() {
+        let $element = this.element.parentNode.parentNode;
+        showModal(
+            "Delete category",
+            `Do you really want to delete "${this.labelTarget.innerText}" and all its tasks?`,
+            "Delete category",
+            (modal, event) => {
+                apiCall(`categories/${this.idValue}/`, 'delete').then(
+                    () => {
+                        $element.parentNode.removeChild($element);
+                        modal.hide();
+                    }
+                );
+            });
+    }
+
+    startEdit() {
+        this.labelTarget.hidden = true;
+        this.inputTarget.hidden = false;
+        this.destroyTarget.hidden = true;
+    }
+
+    stopEdit() {
+        this.labelTarget.hidden = false;
+        this.inputTarget.hidden = true;
+        this.destroyTarget.hidden = false;
     }
 }

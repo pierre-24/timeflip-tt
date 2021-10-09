@@ -8,3 +8,9 @@ footer  {
     font-size: 90%;
     margin-top: 32px;
 }
+
+#categories .destroy {
+    border: none;
+    padding: 0;
+    margin: 0;
+}
