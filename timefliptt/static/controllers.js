@@ -44,23 +44,35 @@ function apiCall(address, method='get', body= null) {
 }
 
 export class CategoriesController extends Controller {
-    connect() {
-        let $tpCategory = document.querySelector('#tp-category');
-        let $element = this.element;
+    static get targets() { return ["elms"]; }
+    static get values() { return {n: Number}; }
 
+    connect() {
+        let _this = this;
         apiCall('categories/')
         .then(function (data) {
             data.categories.forEach((category) => {
-                let $cat = $tpCategory.content.cloneNode(true);
-
-                // set id and name
-                $cat.querySelectorAll('.card-title')[0].dataset.categoryIdValue = category.id;
-                $cat.querySelectorAll('.category-label')[0].innerText = category.name;
-
-                // append
-                $element.append($cat);
+                _this.addCategory(category);
+                _this.nValue++;
             });
         });
+    }
+
+    addCategory(category) {
+        let $cat = document.querySelector('#tp-category').content.cloneNode(true);
+
+        // set id and name
+        $cat.querySelectorAll('.card-title')[0].dataset.categoryIdValue = category.id;
+        $cat.querySelectorAll('.category-label')[0].innerText = category.name;
+
+        // append node
+        this.elmsTarget.append($cat);
+    }
+
+    newCategory() {
+        this.nValue++;
+        apiCall('categories/', 'post', {'name': `New category #${this.nValue}`})
+            .then((data) => this.addCategory(data));
     }
 }
 

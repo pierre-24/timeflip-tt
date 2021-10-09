@@ -8,7 +8,7 @@
 
     <template id="tp-category">
         <div class="col-sm-4">
-        <div class="card" style="width: 18rem;">
+        <div class="card mb-4">
             <div class="card-body">
                 <h5 class="card-title" data-controller="category" data-action="dblclick->category#edit">
                     <span class="category-label" data-category-target="label"></span>
@@ -16,13 +16,18 @@
                 </h5>
             </div>
             <ul class="list-group list-group-flush">
-                <li class="list-group-item">An item</li>
             </ul>
         </div>
         </div>
     </template>
 
-    <div data-controller="categories" class="row"></div>
+    <div data-controller="categories">
+
+        <div class="row" data-categories-target="elms"></div>
+        <p>
+            <button class="btn btn-primary" data-categories-n-value="1" data-action="categories#newCategory">Add a new category</button>
+        </p>
+    </div>
 
 {% endblock %}
 
