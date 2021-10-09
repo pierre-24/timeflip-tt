@@ -1,6 +1,7 @@
 "use strict";
 
 const ESC_KEY = 27;
+const ENTER_KEY = 13;
 
 import { Controller } from "https://unpkg.com/@hotwired/stimulus@3.0.0/dist/stimulus.js";
 
@@ -79,8 +80,25 @@ export class CategoriesController extends Controller {
         let $cat = document.querySelector('#tp-category').content.cloneNode(true);
 
         // set id and name
-        $cat.querySelectorAll('.card-body')[0].dataset.categoryIdValue = category.id;
-        $cat.querySelectorAll('.category-label')[0].innerText = category.name;
+        $cat.querySelector('.card-body').dataset.categoryIdValue = category.id;
+        $cat.querySelector('.category-label').innerText = category.name;
+
+        // append tasks
+        let $ul = $cat.querySelector('ul.list-group');
+        if('tasks' in category) {
+            category.tasks.forEach((task) => {
+                let $task = document.querySelector('#tp-task').content.cloneNode(true);
+
+                $task.querySelector('li').dataset.taskIdValue = task.id;
+                $task.querySelector('li').dataset.taskCategoryIdValue = category.id;
+                $task.querySelector('li').dataset.taskColorValue = task.color;
+
+                $task.querySelector('.task-label').innerText = task.name;
+                $task.querySelector('.task-color').style.backgroundColor = task.color;
+
+                $ul.append($task);
+            });
+        }
 
         // append node
         this.elmsTarget.append($cat);
@@ -142,6 +160,72 @@ export class CategoryController extends Controller {
     stopEdit() {
         this.labelTarget.hidden = false;
         this.inputTarget.hidden = true;
+        this.destroyTarget.hidden = false;
+    }
+}
+
+export class TaskController extends Controller {
+    static get targets() { return ["label", "color", "inputName", "inputColor", "destroy"]; }
+    static get values() { return {id: Number, categoryId: Number, color: String}; }
+
+    edit() {
+        this.startEdit();
+        this.inputNameTarget.value = this.labelTarget.innerText;
+        this.inputColorTarget.value = this.colorValue;
+        this.inputNameTarget.focus();
+    }
+
+    update() {
+        apiCall(`tasks/${this.idValue}/`, 'put', {
+            'name': this.inputNameTarget.value,
+            'color': this.inputColorTarget.value,
+            'category': this.categoryIdValue
+        })
+        .then((data) => {
+            this.stopEdit();
+            this.labelTarget.innerText = data.name;
+            this.colorValue = data.color;
+            this.colorTarget.style.backgroundColor = data.color;
+        });
+    }
+
+    keyup(event) {
+        if (event.keyCode === ESC_KEY) {
+            this.stopEdit();
+        } else if (event.keyCode === ENTER_KEY) {
+            this.update();
+        }
+    }
+
+    destroy() {
+        /*let $element = this.element.parentNode.parentNode;
+        showModal(
+            "Delete category",
+            `Do you really want to delete "${this.labelTarget.innerText}" and all its tasks?`,
+            "Delete category",
+            (modal, event) => {
+                apiCall(`categories/${this.idValue}/`, 'delete').then(
+                    () => {
+                        $element.parentNode.removeChild($element);
+                        modal.hide();
+                    }
+                );
+            });*/
+    }
+
+    startEdit() {
+        this.labelTarget.hidden = true;
+        this.inputNameTarget.hidden = false;
+        this.colorTarget.hidden = true;
+        this.inputColorTarget.hidden = false;
+        this.destroyTarget.hidden = true;
+    }
+
+    stopEdit() {
+        this.labelTarget.hidden = false;
+        this.inputNameTarget.hidden = true;
+        this.colorTarget.hidden = false;
+        this.inputColorTarget.hidden = true;
         this.destroyTarget.hidden = false;
     }
 }
