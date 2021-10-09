@@ -4,9 +4,6 @@ flake8
 flake8-quotes
 autopep8
 flask
-Flask-WTF
-bootstrap-flask
 Flask-SQLAlchemy
-is-safe-url
 marshmallow-sqlalchemy
 webargs

@@ -1,5 +1,3 @@
-{% from 'bootstrap/utils.html' import render_messages %}
-
 <!DOCTYPE HTML>
 <html lang="en">
 
@@ -9,46 +7,43 @@
 
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0">
 
-    {{ bootstrap.load_css() }}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
 </head>
 
 <body>
 
 <nav class="navbar sticky-top navbar-dark navbar-expand-md bg-dark">
-    <a class="navbar-brand"
-       href="{{ url_for('visitors.graphs') }}"
-       title="{{ app_name }}">
-        <img src="{{ url_for('static', filename='logo.svg') }}" alt="{{ app_name }}">
-    </a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#nav-items" aria-controls="nav-items" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-    </button>
-
-    <div class="collapse navbar-collapse" id="nav-items">
-        <ul class="navbar-nav">
-            <li class="nav-item {% if active_menu == 'graphs' %}active{% endif %}">
-            <a class="nav-link" href="{{ url_for('visitors.graphs') }}">Graphs</a>
-            </li>
-            <li class="nav-item {% if active_menu == 'tasks' %}active{% endif %}">
-            <a class="nav-link" href="{{ url_for('visitors.tasks') }}">Tasks</a>
-            </li>
-            <li class="nav-item {% if active_menu == 'timeflip' %}active{% endif %}">
-            <a class="nav-link" href="{{ url_for('visitors.timeflip') }}">TimeFlip</a>
-            </li>
-            <li class="nav-item {% if active_menu == 'history' %}active{% endif %}">
-            <a class="nav-link" href="{{ url_for('visitors.history') }}">History</a>
-            </li>
-            <li class="nav-item {% if active_menu == 'reports' %}active{% endif %}">
-            <a class="nav-link" href="{{ url_for('visitors.reports') }}">Reports</a>
-            </li>
-        </ul>
+    <div class="container-fluid">
+        <a class="navbar-brand"
+           href="{{ url_for('visitors.graphs') }}"
+           title="{{ app_name }}">
+            <img src="{{ url_for('static', filename='logo.svg') }}" alt="{{ app_name }}">
+        </a>
+         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                <a class="nav-link {% if active_menu == 'graphs' %}active{% endif %}" href="{{ url_for('visitors.graphs') }}">Graphs</a>
+                </li>
+                <li class="nav-item">
+                <a class="nav-link {% if active_menu == 'tasks' %}active{% endif %}" href="{{ url_for('visitors.tasks') }}">Tasks</a>
+                </li>
+                <li class="nav-item">
+                <a class="nav-link {% if active_menu == 'timeflip' %}active{% endif %}" href="{{ url_for('visitors.timeflip') }}">TimeFlip</a>
+                </li>
+                <li class="nav-item">
+                <a class="nav-link {% if active_menu == 'history' %}active{% endif %}" href="{{ url_for('visitors.history') }}">History</a>
+                </li>
+                <li class="nav-item">
+                <a class="nav-link {% if active_menu == 'reports' %}active{% endif %}" href="{{ url_for('visitors.reports') }}">Reports</a>
+                </li>
+            </ul>
+        </div>
     </div>
 </nav>
-
-<div class="container mt-2" id="messages-zone">
-{{ render_messages() }}
-</div>
 
 <main role="main" id="content" class="container">
     {% block content %}{% endblock %}
@@ -59,12 +54,25 @@
     created by <a href="{{ app_author_url }}">{{ app_author }}</a>  (version: <a href="{{ app_repo_url }}">{{ app_version }}</a>)
 </footer>
 
+<div class="toast-container" id="toasts">
+    <template id="tp-toast">
+        <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+          <div class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+              <strong class="me-auto toast-title"></strong>
+              <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body"></div>
+          </div>
+        </div>
+    </template>
+</div>
+
 </body>
 
 
 {% block scripts %}
-    {{ bootstrap.load_js() }}
-    <script src="{{ url_for('static', filename='main.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 {% endblock %}
 
 </html>

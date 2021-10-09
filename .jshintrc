@@ -1,6 +1,5 @@
 {
   "esversion": 6,
   "globalstrict": true,
-  "browser" : true,
-  "jquery": true
+  "browser" : true
 }

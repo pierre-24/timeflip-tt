@@ -6,32 +6,23 @@
 {% block content %}
     <h1>Tasks</h1>
 
-    <div class="row">
-    {% for category_id in categories %}
-        <div class="col-sm-6">
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h5 class="card-title d-flex justify-content-between"
-                        data-controller="category"
-                        data-action="dblclick->category#edit"
-                        data-category-target="name"
-                        data-category-id-value="{{ category_id }}">{{ categories[category_id].name }}</h5>
-
-                    <p class="task-pills">
-                        {%  if category_id in tasks_per_category %}
-                            {% for task in tasks_per_category[category_id] %}
-                                <span class="task-pill">
-                                    <span class="task-color" style="background: {{ task.color }}"></span>
-                                    {{ task.name }}
-                                </span>
-                            {% endfor %}
-                        {% endif %}
-                    </p>
-                </div>
+    <template id="tp-category">
+        <div class="col-sm-4">
+        <div class="card" style="width: 18rem;">
+            <div class="card-body">
+                <h5 class="card-title" data-controller="category" data-action="dblclick->category#edit">
+                    <span class="category-label" data-category-target="label"></span>
+                    <input type="text" data-category-target="input" value="" hidden data-action="change->category#update keyup->category#keyup" />
+                </h5>
             </div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item">An item</li>
+            </ul>
         </div>
-    {% endfor %}
-    </div>
+        </div>
+    </template>
+
+    <div data-controller="categories" class="row"></div>
 
 {% endblock %}
 
@@ -39,10 +30,16 @@
     {{ super() }}
 
     <script type="module">
-    import { Application} from "https://unpkg.com/@hotwired/stimulus@3.0.0/dist/stimulus.js";
+    import { Application } from "https://unpkg.com/@hotwired/stimulus@3.0.0/dist/stimulus.js";
     window.Stimulus = Application.start();
 
-    import CategoryController from "{{ url_for('static', filename='controllers/category_controller.js') }}";
+    import {
+        CategoriesController,
+        CategoryController
+    } from "{{ url_for('static', filename='controllers.js') }}";
+
+    Stimulus.register("categories", CategoriesController);
     Stimulus.register("category", CategoryController);
+
     </script>
 {% endblock %}

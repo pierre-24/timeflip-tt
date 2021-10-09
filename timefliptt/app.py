@@ -2,7 +2,6 @@ import argparse
 import atexit
 
 import flask
-from flask_bootstrap import Bootstrap
 from flask_sqlalchemy import SQLAlchemy
 
 import timefliptt
@@ -17,8 +16,7 @@ def create_app(config: Config) -> flask.Flask:
     app = flask.Flask(__name__)
     app.config.from_object(config)
 
-    # module
-    Bootstrap().init_app(app)
+    # modules
     db.init_app(app)
 
     # urls
