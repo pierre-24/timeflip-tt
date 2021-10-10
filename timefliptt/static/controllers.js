@@ -55,13 +55,17 @@ class APICallError extends Error {
     }
 }
 
-function showToast(title, message) {
+function showToast(message, scheme="bg-danger") {
     let $toast = document.getElementById('tp-toast').content.cloneNode(true);
-    $toast.querySelectorAll('.toast-title')[0].innerHTML = title;
-    $toast.querySelectorAll('.toast-body')[0].innerHTML = message;
+
+    $toast.querySelector('.toast-body').innerHTML = message;
+    let $t = $toast.querySelector('.toast')
+    scheme.split(" ").forEach((cl) => {
+        $t.classList.add(cl);
+    });
     document.getElementById('toasts').append($toast);
 
-    new bootstrap.Toast(document.querySelector('.toast:last-child')).show();
+    new bootstrap.Toast($t).show();
 }
 
 function showModal(title, message, button, action) {
@@ -96,7 +100,7 @@ function apiCall(address, method='get', body= null) {
 
     return fetch(`/api/${address}`, params).then(function (response) {
         if (!response.ok) {
-            showToast('Error', `Error code was ${response.status} while calling <code>${address}</code>`);
+            showToast(`Error code was ${response.status} while calling <code class="text-white">${address}</code>`);
             throw new APICallError(response.status, response);
         } else {
             return response.json();
@@ -117,19 +121,25 @@ export class TFConnectController extends Controller {
                 this.idValue = data.timeflip_device.id;
                 this.status();
             } else {
-                this.list_timeflips();
+                this.listTF();
             }
         });
     }
 
-    list_timeflips() {
+    listTF() {
         apiCall('/timeflips').then((data) => {
             if ("timeflip_devices" in data && data.timeflip_devices.length > 0) {
                 this.inputTFTarget.innerHTML = ''; // remove previous options, if any
+                this.connectTarget.hidden = false;
                 data.timeflip_devices.forEach((device) => {
                     let n = document.createElement('option');
                     n.value = device.id;
-                    n.innerText = `${device.name} (${device.address})`;
+
+                    if(device.name != null)
+                        n.innerText = `${device.name} (${device.address})`;
+                    else
+                        n.innerText = device.address;
+
                    this.inputTFTarget.append(n);
                 });
             } else {
@@ -175,8 +185,69 @@ export class TFConnectController extends Controller {
     disconnectTF() {
         this.viewTarget.hidden = true;
         apiCall('timeflips/daemon', 'delete').then(() => {
-            this.list_timeflips();
+            this.listTF();
         });
+    }
+}
+
+export class TFAddController extends Controller {
+    static get targets() { return ["list", "address", "password"]; }
+    connect() {
+        apiCall('devices/').then((data) => {
+            this.listTarget.innerHTML = '';
+
+            data.discovered.forEach((device) => {
+                if (device.id < 0) {
+
+                let $b = document.createElement("button");
+                $b.classList.add("btn");
+                $b.classList.add("btn-primary");
+                $b.innerText = `${device.name} (${device.address})`;
+                $b.addEventListener('click', () => {
+                    this.addressTarget.value = device.address;
+                });
+                this.listTarget.append($b);
+                }
+            });
+
+            if (this.listTarget.childElementCount === 0) {
+                this.listTarget.innerText = "No (new) devices found :'(";
+            }
+        });
+    }
+
+    addTF() {
+        if (this.addressTarget.value === "" || this.passwordTarget.value === "") {
+            showToast("Missing data");
+        } else {
+            apiCall(
+                'timeflips/',
+                "post",
+                {
+                    address: this.addressTarget.value,
+                    password: this.passwordTarget.value
+                }).then((data) => {
+                    // update the list!
+                    const event = new CustomEvent('addTF');
+                    window.dispatchEvent(event);
+
+                    // and display toast
+                    showToast("Device successfully added!", "bg-primary");
+                }).catch((err) => { // be more explicit!
+                    err.metadata.json().then((data) => {
+                       let msg = 'Please correct the following fields: ';
+                       if ('address' in data.errors.json) {
+                           msg += `address (${data.errors.json.address[0]})`;
+                       }
+                       if ('password' in data.errors.json) {
+                           if ('address' in data.errors.json)
+                               msg += ', ';
+                           msg += `password (${data.errors.json.password[0]})`;
+                       }
+                       showToast(msg);
+                    });
+                });
+        }
     }
 }
 

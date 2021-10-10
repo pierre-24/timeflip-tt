@@ -1,5 +1,6 @@
 from flask import Blueprint
 
+from timefliptt.timeflip import hard_logout
 from timefliptt.blueprints.base_views import RenderTemplateView
 
 blueprint = Blueprint('visitors', __name__)
@@ -19,6 +20,17 @@ class TimeflipView(RenderTemplateView):
 
 
 blueprint.add_url_rule('/timeflip', view_func=TimeflipView.as_view('timeflip'))
+
+
+class TimeflipAddView(RenderTemplateView):
+    template_name = 'visitors/timeflip-add.html'
+
+    def get(self, *args, **kwargs):
+        hard_logout()  # otherwise, this messed up the search for new devices
+        return super().get(*args, **kwargs)
+
+
+blueprint.add_url_rule('/timeflip-add', view_func=TimeflipAddView.as_view('timeflip-add'))
 
 
 # --- Tasks

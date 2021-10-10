@@ -67,14 +67,24 @@ class TimeFlipTestCase(FlaskTestCase):
     def test_add_device_wrong_password_ko(self):
         self.assertEqual(self.num_devices, TimeFlipDevice.query.count())
 
-        name = 'whatever'
+        # too long
         address = '12:34:56:78:9a:bc'
         password = '0' * 6
 
         response = self.client.post(flask.url_for('api.timeflips'), json={
             'address': address,
-            'name': name,
             'password': password + 'x'
+        })
+
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(self.num_devices, TimeFlipDevice.query.count())
+
+        # too short
+        password = '0' * 2
+
+        response = self.client.post(flask.url_for('api.timeflips'), json={
+            'address': address,
+            'password': password
         })
 
         self.assertEqual(response.status_code, 422)

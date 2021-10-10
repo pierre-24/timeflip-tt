@@ -43,21 +43,21 @@
                 </li>
             </ul>
 
-        <form data-controller="tfconnect" data-tfconnect-id-value="">
+        <form data-controller="tfconnect" data-tfconnect-id-value="" data-action="addTF@window->tfconnect#listTF">
             <div data-tfconnect-target="timeflips" class="input-group input-group-sm" hidden>
                 <select class="form-control" data-tfconnect-target="inputTF"></select>
                 <button type="button" class="btn btn-primary" data-tfconnect-target="connect" data-action="tfconnect#connectTF"><i class="bi bi-play-fill"></i></button>
-                <a class="btn btn-primary" href="#"><i class="bi bi-plus"></i></a>
+                <a class="btn btn-primary" href="{{ url_for('visitors.timeflip-add') }}"><i class="bi bi-plus"></i></a>
             </div>
             <div data-tfconnect-target="view" class="text-white" hidden>
                 <div>
-                    <span data-tfconnect-target="name">TF (whatever)</span>
-                    <i class="bi bi-pentagon-fill"></i> <span data-tfconnect-target="facet">24</span>
+                    <span data-tfconnect-target="name"></span>
+                    <i class="bi bi-pentagon-fill"></i> <span data-tfconnect-target="facet"></span>
                     <a href="#" class="text-white" data-action="tfconnect#disconnectTF"><i class="bi bi-x"></i></a>
                 </div>
                 <div class="text-muted small">
-                    <span data-tfconnect-target="address">XX:XX:XX:XX:XX:XX</span>
-                    <i class="bi bi-battery-half"></i> <span data-tfconnect-target="battery">68</span>
+                    <span data-tfconnect-target="address"></span>
+                    <i class="bi bi-battery-half"></i> <span data-tfconnect-target="battery"></span>
                 </div>
             </div>
         </form>
@@ -76,18 +76,15 @@
 
 <!-- Toasts -->
 <template id="tp-toast">
-    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
-      <div class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="toast-header">
-          <strong class="me-auto toast-title"></strong>
-          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-        <div class="toast-body"></div>
+      <div class="toast align-items-center border-0 hide text-white" role="alert" aria-live="assertive" aria-atomic="true">
+          <div class="d-flex">
+          <div class="toast-body"></div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+          </div>
       </div>
-    </div>
 </template>
 
-<div class="toast-container" id="toasts">
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 11" id="toasts">
 </div>
 
 <!-- Modal -->
