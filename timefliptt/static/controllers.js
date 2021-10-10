@@ -81,7 +81,7 @@ export class CategoriesController extends Controller {
 
         // set id and name
         $cat.querySelector('.card-body').dataset.categoryIdValue = category.id;
-        $cat.querySelector('.category-label').innerText = category.name;
+        $cat.querySelector('.category-name').innerText = category.name;
 
         // append tasks
         let $ul = $cat.querySelector('ul.list-group');
@@ -93,7 +93,7 @@ export class CategoriesController extends Controller {
                 $task.querySelector('li').dataset.taskCategoryIdValue = category.id;
                 $task.querySelector('li').dataset.taskColorValue = task.color;
 
-                $task.querySelector('.task-label').innerText = task.name;
+                $task.querySelector('.task-name').innerText = task.name;
                 $task.querySelector('.task-color').style.backgroundColor = task.color;
 
                 $ul.append($task);
@@ -112,12 +112,12 @@ export class CategoriesController extends Controller {
 }
 
 export class CategoryController extends Controller {
-    static get targets() { return ["label", "input", "destroy"]; }
+    static get targets() { return ["name", "input", "view", "modify"]; }
     static get values() { return {id: Number}; }
 
     edit() {
         this.startEdit();
-        this.inputTarget.value = this.labelTarget.innerText;
+        this.inputTarget.value = this.nameTarget.innerText;
         this.inputTarget.focus();
     }
 
@@ -125,13 +125,15 @@ export class CategoryController extends Controller {
         apiCall(`categories/${this.idValue}/`, 'put', {'name': this.inputTarget.value})
         .then((data) => {
             this.stopEdit();
-            this.labelTarget.innerText = data.name;
+            this.nameTarget.innerText = data.name;
         });
     }
 
     keyup(event) {
         if (event.keyCode === ESC_KEY) {
             this.stopEdit();
+        } else if (event.keyCode === ENTER_KEY) {
+            this.update();
         }
     }
 
@@ -139,7 +141,7 @@ export class CategoryController extends Controller {
         let $element = this.element.parentNode.parentNode;
         showModal(
             "Delete category",
-            `Do you really want to delete "${this.labelTarget.innerText}" and all its tasks?`,
+            `Do you really want to delete "${this.nameTarget.innerText}" and all its tasks?`,
             "Delete category",
             (modal, event) => {
                 apiCall(`categories/${this.idValue}/`, 'delete').then(
@@ -152,25 +154,23 @@ export class CategoryController extends Controller {
     }
 
     startEdit() {
-        this.labelTarget.hidden = true;
-        this.inputTarget.hidden = false;
-        this.destroyTarget.hidden = true;
+        this.modifyTarget.hidden = false;
+        this.viewTarget.hidden = true;
     }
 
     stopEdit() {
-        this.labelTarget.hidden = false;
-        this.inputTarget.hidden = true;
-        this.destroyTarget.hidden = false;
+        this.modifyTarget.hidden = true;
+        this.viewTarget.hidden = false;
     }
 }
 
 export class TaskController extends Controller {
-    static get targets() { return ["label", "color", "inputName", "inputColor", "destroy"]; }
+    static get targets() { return ["name", "color", "inputName", "inputColor", "view", "modify"]; }
     static get values() { return {id: Number, categoryId: Number, color: String}; }
 
     edit() {
         this.startEdit();
-        this.inputNameTarget.value = this.labelTarget.innerText;
+        this.inputNameTarget.value = this.nameTarget.innerText;
         this.inputColorTarget.value = this.colorValue;
         this.inputNameTarget.focus();
     }
@@ -183,7 +183,7 @@ export class TaskController extends Controller {
         })
         .then((data) => {
             this.stopEdit();
-            this.labelTarget.innerText = data.name;
+            this.nameTarget.innerText = data.name;
             this.colorValue = data.color;
             this.colorTarget.style.backgroundColor = data.color;
         });
@@ -201,7 +201,7 @@ export class TaskController extends Controller {
         /*let $element = this.element.parentNode.parentNode;
         showModal(
             "Delete category",
-            `Do you really want to delete "${this.labelTarget.innerText}" and all its tasks?`,
+            `Do you really want to delete "${this.nameTarget.innerText}" and all its tasks?`,
             "Delete category",
             (modal, event) => {
                 apiCall(`categories/${this.idValue}/`, 'delete').then(
@@ -214,18 +214,12 @@ export class TaskController extends Controller {
     }
 
     startEdit() {
-        this.labelTarget.hidden = true;
-        this.inputNameTarget.hidden = false;
-        this.colorTarget.hidden = true;
-        this.inputColorTarget.hidden = false;
-        this.destroyTarget.hidden = true;
+        this.modifyTarget.hidden = false;
+        this.viewTarget.hidden = true;
     }
 
     stopEdit() {
-        this.labelTarget.hidden = false;
-        this.inputNameTarget.hidden = true;
-        this.colorTarget.hidden = false;
-        this.inputColorTarget.hidden = true;
-        this.destroyTarget.hidden = false;
+        this.modifyTarget.hidden = true;
+        this.viewTarget.hidden = false;
     }
 }

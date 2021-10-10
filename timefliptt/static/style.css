@@ -9,11 +9,18 @@ footer  {
     margin-top: 32px;
 }
 
-#categories .destroy {
+.category-controller .controller-btn,
+.task-controller .controller-btn {
     border: none;
     padding: 0;
     margin: 0;
     background: none;
+    display: none;
+}
+
+.category-controller:hover .controller-btn,
+.task-controller:hover .controller-btn {
+    display: inline-block;
 }
 
 #categories .task-color {
@@ -22,4 +29,5 @@ footer  {
     height: 1rem;
     border: 1px solid black;
     margin-right: 8px;
+    border-radius: 1rem;
 }

@@ -9,12 +9,14 @@
     <template id="tp-category">
         <div class="col-sm-6">
             <div class="card mb-4">
-                <div class="card-body" data-controller="category" data-action="dblclick->category#edit">
-                        <h5 class="card-title d-flex justify-content-between">
-                            <span class="category-label" data-category-target="label"></span>
-                            <button type="button" class="destroy" data-category-target="destroy" data-action="category#destroy"><i class="bi bi-x"></i></button>
-                        </h5>
-                    <input type="text" data-category-target="input" hidden data-action="keyup->category#keyup" />
+                <div class="card-body category-controller" data-controller="category" data-action="dblclick->category#edit">
+                    <h5 class="card-title" data-category-target="view">
+                        <span class="category-name" data-category-target="name"></span>
+                        <button type="button" class="controller-btn" data-action="category#destroy"><i class="bi bi-x"></i></button>
+                    </h5>
+                    <div data-category-target="modify" hidden>
+                        <input type="text" data-category-target="input" data-action="keyup->category#keyup" />
+                    </div>
                 </div>
                 <ul class="list-group list-group-flush">
                 </ul>
@@ -23,13 +25,15 @@
     </template>
 
     <template id="tp-task">
-        <li class="list-group-item" data-controller="task" data-action="dblclick->task#edit">
-            <span class="task-color" data-task-target="color"></span>
-            <span class="task-label" data-task-target="label"></span>
-            <button type="button" class="destroy" data-task-target="destroy" data-action="task#destroy"><i class="bi bi-x"></i></button>
-            <div class="input-group">
-                <input type="color" data-task-target="inputColor" hidden style="height: 2.5rem" />
-                <input type="text" class="form-control" data-task-target="inputName" hidden data-action="change->task#update keyup->task#keyup" />
+        <li class="list-group-item task-controller" data-controller="task" data-action="dblclick->task#edit">
+            <div data-task-target="view">
+                <span class="task-color" data-task-target="color"></span>
+                <span class="task-name" data-task-target="name"></span>
+                <button type="button" class="controller-btn" data-task-target="destroy" data-action="task#destroy"><i class="bi bi-x"></i></button>
+            </div>
+            <div class="input-group input-group-sm" data-task-target="modify" hidden>
+                <input type="color" data-task-target="inputColor" style="width: 2rem; height: 2rem" />
+                <input type="text" class="form-control" data-task-target="inputName"  style="height: 2rem" data-action="change->task#update keyup->task#keyup" />
             </div>
         </li>
     </template>
