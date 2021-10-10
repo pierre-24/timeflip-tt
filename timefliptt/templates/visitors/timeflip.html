@@ -7,7 +7,7 @@
 
     <template id="tp-facettotask">
         <tr data-controller="facettotask">
-            <td data-facettotask-target="facet" class="t-facet"></td>
+            <td class="t-facet"></td>
             <td data-facettotask-target="task" class="t-task"></td>
             <td>
                 <div class="btn-group btn-group-sm">
@@ -48,10 +48,12 @@
 
     <script type="module">
     import {
-        FacetsToTaskController
+        FacetsToTaskController,
+        FacetToTaskController
     } from "{{ url_for('static', filename='controllers.js') }}";
 
     Stimulus.register("facetstotask", FacetsToTaskController);
+    Stimulus.register("facettotask", FacetToTaskController);
 
     </script>
 {% endblock %}

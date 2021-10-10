@@ -462,10 +462,12 @@ export class FacetsToTaskController extends Controller {
                 // list facets
                 this.inputFacetTarget.innerHTML = "";
                 for(let i=0; i < 64; i++) {
-                    let $opt = document.createElement("option");
-                    $opt.value = i;
-                    $opt.innerText = i;
-                    this.inputFacetTarget.append($opt);
+                    if (this.element.querySelectorAll( `.ftt-facet-${i}`).length === 0) {
+                        let $opt = document.createElement("option");
+                        $opt.value = i;
+                        $opt.innerText = i;
+                        this.inputFacetTarget.append($opt);
+                    }
                 }
 
                 // send to bottom
@@ -492,10 +494,36 @@ export class FacetsToTaskController extends Controller {
     addFTT(ftt) {
         let $ftt = document.querySelector('#tp-facettotask').content.cloneNode(true);
 
-        $ftt.querySelector('tr').dataset.facetstotaskIdValue = ftt.id;
+        let $main = $ftt.querySelector('tr');
+        $main.dataset.facettotaskFacetValue = ftt.facet;
+        $main.dataset.facettotaskDeviceValue = this.idValue;
+        $main.dataset.facettotaskTaskValue = ftt.task.id;
+        $main.classList.add(`ftt-facet-${ftt.facet}`);
+
         $ftt.querySelector('.t-facet').innerText = ftt.facet;
         $ftt.querySelector('.t-task').innerHTML = ftt.task.name;
 
         this.tbodyTarget.append($ftt);
+    }
+}
+
+export class FacetToTaskController extends Controller {
+    static get values() { return {facet: Number, task: Number, device: Number}; }
+    static get targets() { return ["task"]; }
+
+    destroy() {
+        let $element = this.element;
+        showModal(
+            "Delete correspondence",
+            `Do you really want to delete correspondence to "${this.taskTarget.innerText}"?`,
+            "Delete correspondence",
+            (modal, event) => {
+                apiCall(`timeflips/${this.deviceValue}/facets/${this.facetValue}/`, 'delete').then(
+                    () => {
+                        $element.parentNode.removeChild($element);
+                        modal.hide();
+                    }
+                );
+            });
     }
 }
