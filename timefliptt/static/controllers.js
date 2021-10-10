@@ -112,7 +112,7 @@ function apiCall(address, method='get', body= null) {
 import { Controller } from "https://unpkg.com/@hotwired/stimulus@3.0.0/dist/stimulus.js";
 
 export class TFConnectController extends Controller {
-    static get targets() { return ["timeflips", "view", "inputTF", "connect", "name", "address", "battery", "facet"]; }
+    static get targets() { return ["timeflips", "view", "inputTF", "connect", "name", "address", "battery", "facet", "link"]; }
     static get values() { return {id: Number}; }
 
     connect() {
@@ -180,6 +180,7 @@ export class TFConnectController extends Controller {
         this.addressTarget.innerText = data.address;
         this.batteryTarget.innerText = data.battery;
         this.facetTarget.innerText = data.facet;
+        this.linkTarget.href = `/timeflip-${this.idValue}`;
     }
 
     disconnectTF() {
@@ -255,7 +256,6 @@ export class TFAddController extends Controller {
 
 export class CategoriesController extends Controller {
     static get targets() { return ["elms"]; }
-    static get values() { return {n: Number}; }
 
     connect() {
         let _this = this;
@@ -263,7 +263,6 @@ export class CategoriesController extends Controller {
         .then(function (data) {
             data.categories.forEach((category) => {
                 _this.addCategory(category);
-                _this.nValue++;
             });
         });
     }
@@ -296,7 +295,6 @@ export class CategoriesController extends Controller {
     }
 
     newCategory() {
-        this.nValue++;
         apiCall('categories/', 'post', {'name': randomName()})
             .then((data) => this.addCategory(data));
     }
@@ -435,5 +433,69 @@ export class TaskController extends Controller {
     stopEdit() {
         this.modifyTarget.hidden = true;
         this.viewTarget.hidden = false;
+    }
+}
+
+export class FacetsToTaskController extends Controller {
+    static get values() { return {id: Number}; }
+    static get targets() { return ["inputFacet", "inputTask", "append", "tbody"]; }
+
+    connect() {
+        apiCall(`timeflips/${this.idValue}/facets/`)
+            .then((data) => {
+                data.facet_to_task.forEach((ftt) => this.addFTT(ftt));
+            });
+    }
+
+    newFTT() {
+        apiCall(`tasks/`)
+            .then((data) => {
+                // list tasks
+                this.inputTaskTarget.innerHTML = ""; // remove previous
+                data.tasks.forEach((task) => {
+                    let $opt = document.createElement("option");
+                    $opt.value = task.id;
+                    $opt.innerText = task.name;
+                    this.inputTaskTarget.append($opt);
+                });
+
+                // list facets
+                this.inputFacetTarget.innerHTML = "";
+                for(let i=0; i < 64; i++) {
+                    let $opt = document.createElement("option");
+                    $opt.value = i;
+                    $opt.innerText = i;
+                    this.inputFacetTarget.append($opt);
+                }
+
+                // send to bottom
+                let $parent = this.appendTarget.parentNode;
+                let $e = this.appendTarget.cloneNode(true);
+                $parent.removeChild(this.appendTarget);
+                $parent.append($e);
+
+                this.appendTarget.hidden = false;
+            });
+    }
+
+    submitNewFTT() {
+        apiCall(
+            `timeflips/${this.idValue}/facets/${this.inputFacetTarget.value}/`,
+            'put',
+            { task: this.inputTaskTarget.value }
+            ).then((ftt) => {
+                this.addFTT(ftt);
+                this.appendTarget.hidden = true;
+            });
+    }
+
+    addFTT(ftt) {
+        let $ftt = document.querySelector('#tp-facettotask').content.cloneNode(true);
+
+        $ftt.querySelector('tr').dataset.facetstotaskIdValue = ftt.id;
+        $ftt.querySelector('.t-facet').innerText = ftt.facet;
+        $ftt.querySelector('.t-task').innerHTML = ftt.task.name;
+
+        this.tbodyTarget.append($ftt);
     }
 }

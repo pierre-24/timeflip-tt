@@ -297,7 +297,11 @@ class FacetsView(MethodView):
         if device is not None:
             return jsonify(
                 facet_to_task=FacetToTaskSchema(many=True, exclude=('timeflip_device', 'id')).dump(
-                    FacetToTask.query.filter(FacetToTask.timeflip_device_id.is_(device.id)).all()
+                    FacetToTask
+                    .query
+                    .filter(FacetToTask.timeflip_device_id.is_(device.id))
+                    .order_by(FacetToTask.facet)
+                    .all()
                 ))
         else:
             flask.abort(404, description='Unknown TimeFlip with id={}'.format(id))

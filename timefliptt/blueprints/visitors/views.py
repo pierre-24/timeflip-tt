@@ -1,6 +1,8 @@
+import flask
 from flask import Blueprint
 
 from timefliptt.timeflip import hard_logout
+from timefliptt.blueprints.base_models import TimeFlipDevice
 from timefliptt.blueprints.base_views import RenderTemplateView
 
 blueprint = Blueprint('visitors', __name__)
@@ -18,8 +20,18 @@ blueprint.add_url_rule('/graphs', view_func=GraphsView.as_view('graphs'))
 class TimeflipView(RenderTemplateView):
     template_name = 'visitors/timeflip.html'
 
+    def get_context_data(self, *args, **kwargs) -> dict:
 
-blueprint.add_url_rule('/timeflip', view_func=TimeflipView.as_view('timeflip'))
+        device = TimeFlipDevice.query.get(kwargs.get('id', -1))
+        if device is None:
+            flask.abort(404)
+
+        ctx = super().get_context_data(*args, **kwargs)
+        ctx['timeflip_device'] = device
+        return ctx
+
+
+blueprint.add_url_rule('/timeflip-<int:id>', view_func=TimeflipView.as_view('timeflip'))
 
 
 class TimeflipAddView(RenderTemplateView):

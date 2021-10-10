@@ -1,8 +1,57 @@
 {% extends "base.in.html" %}
-{% set active_menu = 'timeflip' %}
 
 {% block page_title %}TimeFlip{% endblock %}
 
 {% block content %}
     <h1>TimeFlip</h1>
+
+    <template id="tp-facettotask">
+        <tr data-controller="facettotask">
+            <td data-facettotask-target="facet" class="t-facet"></td>
+            <td data-facettotask-target="task" class="t-task"></td>
+            <td>
+                <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-primary" data-action="facettotask#edit"><i class="bi bi-pen"></i></button>
+                    <button type="button" class="btn btn-danger" data-action="facettotask#destroy"><i class="bi bi-x"></i></button>
+                </div>
+            </td>
+        </tr>
+    </template>
+
+    <div data-controller="facetstotask" data-facetstotask-id-value="{{ timeflip_device.id }}">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">Facet</th>
+                    <th scope="col">Task</th>
+                    <th scope="col">Action</th>
+                </tr>
+            </thead>
+            <tbody data-facetstotask-target="tbody">
+            <tr data-facetstotask-target="append" hidden>
+                <td id="facet"><select data-facetstotask-target="inputFacet"></select></td>
+                <td id="task"><select data-facetstotask-target="inputTask"></select></td>
+                <td>
+                    <button type="button" class="btn btn-primary btn-sm" data-action="facetstotask#submitNewFTT"><i class="bi bi-check"></i></button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <p>
+            <button class="btn btn-primary" data-action="facetstotask#newFTT">Add a new correspondence</button>
+        </p>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+
+    <script type="module">
+    import {
+        FacetsToTaskController
+    } from "{{ url_for('static', filename='controllers.js') }}";
+
+    Stimulus.register("facetstotask", FacetsToTaskController);
+
+    </script>
 {% endblock %}

@@ -33,9 +33,6 @@
                 <a class="nav-link {% if active_menu == 'tasks' %}active{% endif %}" href="{{ url_for('visitors.tasks') }}">Tasks</a>
                 </li>
                 <li class="nav-item">
-                <a class="nav-link {% if active_menu == 'timeflip' %}active{% endif %}" href="{{ url_for('visitors.timeflip') }}">TimeFlip</a>
-                </li>
-                <li class="nav-item">
                 <a class="nav-link {% if active_menu == 'history' %}active{% endif %}" href="{{ url_for('visitors.history') }}">History</a>
                 </li>
                 <li class="nav-item">
@@ -53,7 +50,8 @@
                 <div>
                     <span data-tfconnect-target="name"></span>
                     <i class="bi bi-pentagon-fill"></i> <span data-tfconnect-target="facet"></span>
-                    <a href="#" class="text-white" data-action="tfconnect#disconnectTF"><i class="bi bi-x"></i></a>
+                    <a href="" class="text-white" data-tfconnect-target="link"><i class="bi bi-sliders"></i></a>
+                    <a href="#" class="text-white" data-action="tfconnect#disconnectTF"><i class="bi bi-x-lg"></i></a>
                 </div>
                 <div class="text-muted small">
                     <span data-tfconnect-target="address"></span>
