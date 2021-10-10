@@ -542,7 +542,11 @@ export class FacetToTaskController extends Controller {
 
                 this.startEdit();
             });
-        }
+    }
+
+    cancel() {
+        this.stopEdit();
+    }
 
     update() {
         apiCall(
