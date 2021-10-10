@@ -7,7 +7,7 @@ from marshmallow import Schema, post_load, validate
 
 from timefliptt.app import db
 from timefliptt.blueprints.api.views import blueprint
-from timefliptt.blueprints.api.schemas import CategorySchema, TaskSchema, Parser
+from timefliptt.blueprints.api.schemas import CategorySchema, TaskSchema, Parser, validate_color
 from timefliptt.blueprints.base_models import Category, Task
 
 
@@ -134,16 +134,21 @@ class TaskView(MethodView):
         else:
             flask.abort(404, description='Unknown task with id={}'.format(id))
 
+    class TaskPutSchema(Schema):
+        name = fields.String(validate=validate.Length(min=1))
+        color = fields.String(validate=validate_color)
+        category = fields.Integer(validate=validate.Range(min=0))
+
     @parser.use_args(TaskSimpleSchema, location='view_args')
-    @parser.use_kwargs(TaskSchema(exclude=('id', )), location='json')
-    def put(self, task: Task, id: int, name: str, color: str, category_id: int) -> Response:
+    @parser.use_kwargs(TaskPutSchema, location='json')
+    def patch(self, task: Task, id: int, **kwargs) -> Response:
         """Modify an existing task
         """
 
         if task is not None:
-            task.name = name
-            task.color = color
-            task.category_id = category_id
+            task.name = kwargs.get('name', task.name)
+            task.color = kwargs.get('color', task.color)
+            task.category_id = kwargs.get('category', task.category_id)
 
             db.session.add(task)
             db.session.commit()

@@ -39,9 +39,9 @@ class TaskSchema(BaseSchema):
         model = Task
 
     id = auto_field(required=True, validate=validate.Range(min=0))
-    name = auto_field(required=True)
+    name = auto_field(required=True, validate=validate.Length(min=1))
     color = auto_field(validate=validate_color, required=True)
-    category = auto_field('category_id', required=True)
+    category = auto_field('category_id', required=True, validate=validate.Range(min=0))
 
 
 class CategorySchema(BaseSchema):
@@ -49,7 +49,7 @@ class CategorySchema(BaseSchema):
         model = Category
 
     id = auto_field(required=True, validate=validate.Range(min=0))
-    name = auto_field(required=True)
+    name = auto_field(required=True, validate=validate.Length(min=1))
     tasks = Nested(TaskSchema, many=True, exclude=('category', ))
 
 

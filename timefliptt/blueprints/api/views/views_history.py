@@ -79,7 +79,7 @@ class HistoryElementsView(MethodView):
 
     @parser.use_args(SimpleHistoryElementsSchema, location='query')
     @parser.use_kwargs(ModifyHistorySchema, location='json')
-    def put(self, elements: List[HistoryElement], **kwargs) -> Response:
+    def patch(self, elements: List[HistoryElement], **kwargs) -> Response:
         if len(elements) > 0:
             if 'task' in kwargs:
                 task = Task.query.get(kwargs.get('task'))
@@ -139,7 +139,7 @@ class HistoryElementView(MethodView):
 
     @parser.use_args(SimpleHistoryElementSchema, location='view_args')
     @parser.use_kwargs(ModifyHistorySchema, location='json')
-    def put(self, element: HistoryElement, id: int, **kwargs) -> Response:
+    def patch(self, element: HistoryElement, id: int, **kwargs) -> Response:
         if element is not None:
             if 'task' in kwargs:
                 task = Task.query.get(kwargs.get('task'))

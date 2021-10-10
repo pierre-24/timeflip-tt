@@ -221,7 +221,7 @@ class TasksTestCase(FlaskTestCase):
         name = 'whatever'
         color = '#000000'
 
-        response = self.client.put(flask.url_for('api.task', id=self.task_1_1.id), json={
+        response = self.client.patch(flask.url_for('api.task', id=self.task_1_1.id), json={
             'name': name,
             'color': color,
             'category': self.category_2.id
@@ -245,7 +245,7 @@ class TasksTestCase(FlaskTestCase):
         name = 'whatever'
         color = '#000'
 
-        response = self.client.put(flask.url_for('api.task', id=self.task_1_1.id), json={
+        response = self.client.patch(flask.url_for('api.task', id=self.task_1_1.id), json={
             'name': name,
             'color': color,
             'category': self.category_2.id

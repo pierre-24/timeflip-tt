@@ -180,7 +180,7 @@ class HistoryTestCase(FlaskTestCase):
         start = datetime.now() - timedelta(seconds=100)
         end = start + timedelta(seconds=1)
 
-        response = self.client.put(flask.url_for('api.history-el', id=element.id), json={
+        response = self.client.patch(flask.url_for('api.history-el', id=element.id), json={
             'comment': comment,
             'task': task.id,
             'start': start.isoformat(),
@@ -203,14 +203,14 @@ class HistoryTestCase(FlaskTestCase):
     def test_modify_unknown_history_element_ko(self):
         self.assertEqual(self.num_elements, HistoryElement.query.count())
 
-        response = self.client.put(flask.url_for('api.history-el', id=self.num_elements + 1))
+        response = self.client.patch(flask.url_for('api.history-el', id=self.num_elements + 1))
         self.assertEqual(response.status_code, 404)
 
     def test_modify_history_element_unknown_task_ko(self):
         self.assertEqual(self.num_elements, HistoryElement.query.count())
         element = self.elements[0]
 
-        response = self.client.put(flask.url_for('api.history-el', id=element.id), json={
+        response = self.client.patch(flask.url_for('api.history-el', id=element.id), json={
             'task': Task.query.count() + 1
         })
         self.assertEqual(response.status_code, 404)
@@ -260,7 +260,7 @@ class HistoryTestCase(FlaskTestCase):
         comment = 'whatever'
         task = self.task
 
-        response = self.client.put(
+        response = self.client.patch(
             flask.url_for('api.history-els') + '?' + '&'.join('id={}'.format(e.id) for e in elements), json={
                 'comment': comment,
                 'task': task.id
@@ -280,14 +280,14 @@ class HistoryTestCase(FlaskTestCase):
     def test_modify_unknown_history_elements_batch_ko(self):
         self.assertEqual(self.num_elements, HistoryElement.query.count())
 
-        response = self.client.put(flask.url_for('api.history-els') + '?id={}'.format(self.num_elements + 1))
+        response = self.client.patch(flask.url_for('api.history-els') + '?id={}'.format(self.num_elements + 1))
         self.assertEqual(response.status_code, 404)
 
     def test_modify_history_elements_batch_unknown_task_ko(self):
         self.assertEqual(self.num_elements, HistoryElement.query.count())
         elements = self.elements[0:2]
 
-        response = self.client.put(
+        response = self.client.patch(
             flask.url_for('api.history-els') + '?' + '&'.join('id={}'.format(e.id) for e in elements), json={
                 'task': Task.query.count() + 1
             })

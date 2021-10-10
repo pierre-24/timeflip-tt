@@ -90,7 +90,6 @@ export class CategoriesController extends Controller {
                 let $task = document.querySelector('#tp-task').content.cloneNode(true);
 
                 $task.querySelector('li').dataset.taskIdValue = task.id;
-                $task.querySelector('li').dataset.taskCategoryIdValue = category.id;
                 $task.querySelector('li').dataset.taskColorValue = task.color;
 
                 $task.querySelector('.task-name').innerText = task.name;
@@ -122,7 +121,7 @@ export class CategoryController extends Controller {
     }
 
     update() {
-        apiCall(`categories/${this.idValue}/`, 'put', {'name': this.inputTarget.value})
+        apiCall(`categories/${this.idValue}/`, 'patch', {'name': this.inputTarget.value})
         .then((data) => {
             this.stopEdit();
             this.nameTarget.innerText = data.name;
@@ -166,7 +165,7 @@ export class CategoryController extends Controller {
 
 export class TaskController extends Controller {
     static get targets() { return ["name", "color", "inputName", "inputColor", "view", "modify"]; }
-    static get values() { return {id: Number, categoryId: Number, color: String}; }
+    static get values() { return {id: Number, color: String}; }
 
     edit() {
         this.startEdit();
@@ -176,10 +175,9 @@ export class TaskController extends Controller {
     }
 
     update() {
-        apiCall(`tasks/${this.idValue}/`, 'put', {
+        apiCall(`tasks/${this.idValue}/`, 'patch', {
             'name': this.inputNameTarget.value,
-            'color': this.inputColorTarget.value,
-            'category': this.categoryIdValue
+            'color': this.inputColorTarget.value
         })
         .then((data) => {
             this.stopEdit();
