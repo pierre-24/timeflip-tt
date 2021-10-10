@@ -107,6 +107,79 @@ function apiCall(address, method='get', body= null) {
 /* Controllers */
 import { Controller } from "https://unpkg.com/@hotwired/stimulus@3.0.0/dist/stimulus.js";
 
+export class TFConnectController extends Controller {
+    static get targets() { return ["timeflips", "view", "inputTF", "connect", "name", "address", "battery", "facet"]; }
+    static get values() { return {id: Number}; }
+
+    connect() {
+        apiCall(`/timeflips/daemon`).then((data) => {
+            if (data.daemon_status === "connected") {
+                this.idValue = data.timeflip_device.id;
+                this.status();
+            } else {
+                this.list_timeflips();
+            }
+        });
+    }
+
+    list_timeflips() {
+        apiCall('/timeflips').then((data) => {
+            if ("timeflip_devices" in data && data.timeflip_devices.length > 0) {
+                this.inputTFTarget.innerHTML = ''; // remove previous options, if any
+                data.timeflip_devices.forEach((device) => {
+                    let n = document.createElement('option');
+                    n.value = device.id;
+                    n.innerText = `${device.name} (${device.address})`;
+                   this.inputTFTarget.append(n);
+                });
+            } else {
+                let n = document.createElement('option');
+                n.innerText = "No timeflip registered";
+                this.inputTFTarget.append(n);
+                this.connectTarget.hidden = true;
+            }
+            this.timeflipsTarget.hidden = false;
+            this.connectTarget.disabled = false;
+        });
+    }
+
+    connectTF() {
+        if(this.inputTFTarget.value === "")
+            return;
+
+        this.connectTarget.disabled = true;
+        apiCall(`timeflips/${this.inputTFTarget.value}/handle`, 'post')
+            .then((data) => {
+                this.idValue = this.inputTFTarget.value;
+                this.update_status(data);
+                this.timeflipsTarget.hidden = true;
+                this.viewTarget.hidden = false;
+            });
+    }
+
+    status() {
+        apiCall(`timeflips/${this.idValue}/handle`)
+            .then((data) => {
+                this.update_status(data);
+                this.viewTarget.hidden = false;
+            });
+    }
+
+    update_status(data) {
+        this.nameTarget.innerText = data.name;
+        this.addressTarget.innerText = data.address;
+        this.batteryTarget.innerText = data.battery;
+        this.facetTarget.innerText = data.facet;
+    }
+
+    disconnectTF() {
+        this.viewTarget.hidden = true;
+        apiCall('timeflips/daemon', 'delete').then(() => {
+            this.list_timeflips();
+        });
+    }
+}
+
 export class CategoriesController extends Controller {
     static get targets() { return ["elms"]; }
     static get values() { return {n: Number}; }
