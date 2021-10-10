@@ -3,6 +3,10 @@
 const ESC_KEY = 27;
 const ENTER_KEY = 13;
 
+Array.prototype.random = function () {
+  return this[Math.floor((Math.random()*this.length))];
+};
+
 import { Controller } from "https://unpkg.com/@hotwired/stimulus@3.0.0/dist/stimulus.js";
 
 class APICallError extends Error {
@@ -80,7 +84,7 @@ export class CategoriesController extends Controller {
         let $cat = document.querySelector('#tp-category').content.cloneNode(true);
 
         // set id and name
-        $cat.querySelector('.card-body').dataset.categoryIdValue = category.id;
+        $cat.querySelector('.card').dataset.categoryIdValue = category.id;
         $cat.querySelector('.category-name').innerText = category.name;
 
         // append tasks
@@ -121,7 +125,7 @@ export class CategoryController extends Controller {
     }
 
     update() {
-        apiCall(`categories/${this.idValue}/`, 'patch', {'name': this.inputTarget.value})
+        apiCall(`categories/${this.idValue}/`, 'put', {'name': this.inputTarget.value})
         .then((data) => {
             this.stopEdit();
             this.nameTarget.innerText = data.name;
@@ -137,7 +141,7 @@ export class CategoryController extends Controller {
     }
 
     destroy() {
-        let $element = this.element.parentNode.parentNode;
+        let $element = this.element.parentNode;
         showModal(
             "Delete category",
             `Do you really want to delete "${this.nameTarget.innerText}" and all its tasks?`,
@@ -149,6 +153,30 @@ export class CategoryController extends Controller {
                         modal.hide();
                     }
                 );
+            });
+    }
+
+    get randomColor() {
+        const hx = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
+        return '#' + hx.random() + hx.random() + hx.random() + hx.random() + hx.random() + hx.random();
+    }
+
+    newTask() {
+        let $task = document.querySelector('#tp-task').content.cloneNode(true);
+        let $ul = this.element.querySelector('ul');
+
+        apiCall(
+            `categories/${this.idValue}/`,
+            'post',
+            {'name': `Task #${$ul.childElementCount + 1}`, 'color': this.randomColor}
+            ).then((task) => {
+                $task.querySelector('li').dataset.taskIdValue = task.id;
+                $task.querySelector('li').dataset.taskColorValue = task.color;
+
+                $task.querySelector('.task-name').innerText = task.name;
+                $task.querySelector('.task-color').style.backgroundColor = task.color;
+
+                $ul.append($task);
             });
     }
 

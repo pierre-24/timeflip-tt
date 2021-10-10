@@ -8,10 +8,11 @@
 
     <template id="tp-category">
         <div class="col-sm-6">
-            <div class="card mb-4">
-                <div class="card-body category-controller" data-controller="category" data-action="dblclick->category#edit">
+            <div class="card mb-4" data-controller="category">
+                <div class="card-body category-controller" data-action="dblclick->category#edit">
                     <h5 class="card-title" data-category-target="view">
                         <span class="category-name" data-category-target="name"></span>
+                        <button type="button" class="controller-btn" data-action="category#newTask"><i class="bi bi-plus"></i></button>
                         <button type="button" class="controller-btn" data-action="category#destroy"><i class="bi bi-x"></i></button>
                     </h5>
                     <div data-category-target="modify" hidden>
@@ -29,7 +30,7 @@
             <div data-task-target="view">
                 <span class="task-color" data-task-target="color"></span>
                 <span class="task-name" data-task-target="name"></span>
-                <button type="button" class="controller-btn" data-task-target="destroy" data-action="task#destroy"><i class="bi bi-x"></i></button>
+                <button type="button" class="controller-btn" data-action="task#destroy"><i class="bi bi-x"></i></button>
             </div>
             <div class="input-group input-group-sm" data-task-target="modify" hidden>
                 <input type="color" data-task-target="inputColor" style="width: 2rem; height: 2rem" />
