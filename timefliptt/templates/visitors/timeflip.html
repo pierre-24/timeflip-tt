@@ -26,6 +26,11 @@
     </template>
 
     <div data-controller="facetstotask" data-facetstotask-id-value="{{ timeflip_device.id }}">
+        <div class="btn-group mb-4">
+            <button class="btn btn-outline-primary"><i class="bi bi-pen"></i> Edit TimeFlip</button>
+            <button class="btn btn-outline-primary"><i class="bi bi-hammer"></i> Reset calibration</button>
+            <button class="btn btn-outline-primary"><i class="bi bi-list-check"></i> Fetch history</button>
+        </div>
         <table class="table">
             <thead>
                 <tr>
@@ -39,13 +44,16 @@
                 <td id="facet"><select data-facetstotask-target="inputFacet"></select></td>
                 <td id="task"><select data-facetstotask-target="inputTask"></select></td>
                 <td>
-                    <button type="button" class="btn btn-primary btn-sm" data-action="facetstotask#submitNewFTT"><i class="bi bi-check"></i></button>
+                    <div class="btn-group btn-group-sm">
+                        <button type="button" class="btn btn-primary" data-action="facetstotask#cancel"><i class="bi bi-x"></i></button>
+                        <button type="button" class="btn btn-primary" data-action="facetstotask#submit"><i class="bi bi-check"></i></button>
+                    </div>
                 </td>
             </tr>
             </tbody>
         </table>
         <p>
-            <button class="btn btn-primary" data-action="facetstotask#newFTT">Add a new correspondence</button>
+            <button class="btn btn-primary" data-action="facetstotask#create"><i class="bi bi-plus"></i> Add a new correspondence</button>
         </p>
     </div>
 {% endblock %}

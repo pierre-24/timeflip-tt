@@ -447,7 +447,7 @@ export class FacetsToTaskController extends Controller {
             });
     }
 
-    newFTT() {
+    create() {
         apiCall(`tasks/`)
             .then((data) => {
                 // list tasks
@@ -480,17 +480,6 @@ export class FacetsToTaskController extends Controller {
             });
     }
 
-    submitNewFTT() {
-        apiCall(
-            `timeflips/${this.idValue}/facets/${this.inputFacetTarget.value}/`,
-            'put',
-            { task: this.inputTaskTarget.value }
-            ).then((ftt) => {
-                this.addFTT(ftt);
-                this.appendTarget.hidden = true;
-            });
-    }
-
     addFTT(ftt) {
         let $ftt = document.querySelector('#tp-facettotask').content.cloneNode(true);
 
@@ -504,6 +493,21 @@ export class FacetsToTaskController extends Controller {
         $ftt.querySelector('.t-task').innerHTML = ftt.task.name;
 
         this.tbodyTarget.append($ftt);
+    }
+
+    cancel() {
+        this.appendTarget.hidden = true;
+    }
+
+    submit() {
+        apiCall(
+            `timeflips/${this.idValue}/facets/${this.inputFacetTarget.value}/`,
+            'put',
+            { task: this.inputTaskTarget.value }
+            ).then((ftt) => {
+                this.addFTT(ftt);
+                this.appendTarget.hidden = true;
+            });
     }
 }
 
