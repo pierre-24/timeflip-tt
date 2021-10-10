@@ -21,6 +21,10 @@ class TimeFlipDevice(BaseModel):
     password = db.Column(db.VARCHAR(length=6), nullable=False)
     calibration = db.Column(db.Integer())
 
+    # just for cascading
+    facets = db.relationship('FacetToTask', cascade='all,delete')
+    history_elements = db.relationship('HistoryElement')
+
     @classmethod
     def create(cls, address: str, password: str, name: str = None) -> 'TimeFlipDevice':
         o = cls()
@@ -34,7 +38,7 @@ class TimeFlipDevice(BaseModel):
 class Category(BaseModel):
     name = db.Column(db.VARCHAR(length=150), nullable=False)
 
-    tasks = db.relationship('Task', back_populates='category')
+    tasks = db.relationship('Task', back_populates='category', cascade='all,delete')
 
     @classmethod
     def create(cls, name: str) -> 'Category':
@@ -52,6 +56,10 @@ class Task(BaseModel):
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
     category = db.relationship('Category', uselist=False, back_populates='tasks')
 
+    # just for cascading
+    facets = db.relationship('FacetToTask', cascade='all,delete')
+    history_elements = db.relationship('HistoryElement')
+
     @classmethod
     def create(cls, name: str, category: Union[int, Category], color: str) -> 'Task':
         o = cls()
@@ -67,10 +75,10 @@ class FacetToTask(BaseModel):
     facet = db.Column(db.Integer, nullable=False)
 
     timeflip_device_id = db.Column(db.Integer, db.ForeignKey('timeflip_device.id'))
-    timeflip_device = db.relationship('TimeFlipDevice', uselist=False)
+    timeflip_device = db.relationship('TimeFlipDevice', uselist=False, back_populates='facets')
 
     task_id = db.Column(db.Integer, db.ForeignKey('task.id'))
-    task = db.relationship('Task', uselist=False)
+    task = db.relationship('Task', uselist=False, back_populates='facets')
 
     @classmethod
     def create(cls, device: Union[int, TimeFlipDevice], facet: int, task: Union[int, Task]) -> 'FacetToTask':
@@ -89,10 +97,10 @@ class HistoryElement(BaseModel):
     comment = db.Column(db.Text)
 
     timeflip_device_id = db.Column(db.Integer, db.ForeignKey('timeflip_device.id', ondelete='SET NULL'))
-    timeflip_device = db.relationship('TimeFlipDevice', uselist=False)
+    timeflip_device = db.relationship('TimeFlipDevice', uselist=False, back_populates='history_elements')
 
     task_id = db.Column(db.Integer, db.ForeignKey('task.id', ondelete='SET NULL'))
-    task = db.relationship('Task', uselist=False)
+    task = db.relationship('Task', uselist=False, back_populates='history_elements')
 
     @classmethod
     def create(

@@ -80,7 +80,7 @@ class HistoryTestCase(FlaskTestCase):
 
         for i in range(num_elements):
             end = start + timedelta(seconds=1)
-            element = HistoryElement.create(start, end, random.randrange(0, 63), self.device)
+            element = HistoryElement.create(start, end, random.randrange(0, 63), self.device, self.task)
             self.db_session.add(element)
             self.elements.append(element)
             start = end
@@ -114,7 +114,7 @@ class HistoryTestCase(FlaskTestCase):
         self.assertEqual(e.original_facet, data['original_facet'])
         self.assertEqual(e.timeflip_device_id, data['timeflip_device'])
         self.assertEqual(e.comment, data['comment'])
-        self.assertEqual(e.task_id, data['task'])
+        self.assertEqual(e.task_id, data['task']['id'])
         self.assertEqual(e.start.isoformat(), data['start'])
         self.assertEqual(e.end.isoformat(), data['end'])
 
@@ -160,7 +160,7 @@ class HistoryTestCase(FlaskTestCase):
         self.assertEqual(element.original_facet, data['original_facet'])
         self.assertEqual(element.timeflip_device_id, data['timeflip_device'])
         self.assertEqual(element.comment, data['comment'])
-        self.assertEqual(element.task_id, data['task'])
+        self.assertEqual(element.task_id, data['task']['id'])
         self.assertEqual(element.start.isoformat(), data['start'])
         self.assertEqual(element.end.isoformat(), data['end'])
 
@@ -292,3 +292,21 @@ class HistoryTestCase(FlaskTestCase):
                 'task': Task.query.count() + 1
             })
         self.assertEqual(response.status_code, 404)
+
+    def test_delete_task_does_not_delete_history_ok(self):
+        self.assertEqual(self.num_elements, HistoryElement.query.count())
+
+        self.db_session.delete(self.task)
+        self.db_session.commit()
+
+        self.assertEqual(self.num_elements, HistoryElement.query.count())
+        self.assertIsNone(HistoryElement.query.first().task_id)
+
+    def test_delete_device_does_not_delete_history_ok(self):
+        self.assertEqual(self.num_elements, HistoryElement.query.count())
+
+        self.db_session.delete(self.device)
+        self.db_session.commit()
+
+        self.assertEqual(self.num_elements, HistoryElement.query.count())
+        self.assertIsNone(HistoryElement.query.first().timeflip_device_id)

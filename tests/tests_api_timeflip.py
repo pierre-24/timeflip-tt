@@ -260,3 +260,21 @@ class FacetToTaskTestCase(FlaskTestCase):
 
         response = self.client.delete(flask.url_for('api.timeflip-facet', id=self.device.id, facet=facet))
         self.assertEqual(response.status_code, 404)
+
+    def test_delete_task_also_delete_facet_ok(self):
+        self.assertEqual(self.num_ftt, FacetToTask.query.count())
+
+        self.db_session.delete(self.task_1)
+        self.db_session.commit()
+
+        self.assertEqual(self.num_ftt - 1, FacetToTask.query.count())
+        self.assertIsNone(FacetToTask.query.get(self.ftt.id))
+
+    def test_delete_device_also_delete_facet_ok(self):
+        self.assertEqual(self.num_ftt, FacetToTask.query.count())
+
+        self.db_session.delete(self.device)
+        self.db_session.commit()
+
+        self.assertEqual(self.num_ftt - 1, FacetToTask.query.count())
+        self.assertIsNone(FacetToTask.query.get(self.ftt.id))

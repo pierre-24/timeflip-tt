@@ -91,13 +91,7 @@ class CategoryView(MethodView):
         """Delete an existing category
         """
         if category is not None:
-
-            tasks = Task.query.filter(Task.category_id.is_(category.id)).all()
-            for task in tasks:
-                db.session.delete(task)
-
             db.session.delete(category)
-
             db.session.commit()
             return jsonify(status='ok')
         else:
