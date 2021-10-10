@@ -81,6 +81,9 @@ class TimeFlipsView(MethodView):
         """Register a new device
         """
 
+        if TimeFlipDevice.query.filter(TimeFlipDevice.address.is_(address)).first() is not None:
+            flask.abort(403, description='Cannot add the same device twice!')
+
         device = TimeFlipDevice.create(address, password)
 
         db.session.add(device)

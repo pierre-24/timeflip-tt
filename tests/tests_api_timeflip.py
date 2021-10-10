@@ -50,6 +50,17 @@ class TimeFlipTestCase(FlaskTestCase):
         self.assertEqual(password, d.password)
         self.assertEqual(address, d.address)
 
+    def test_add_device_already_exists_ko(self):
+        self.assertEqual(self.num_devices, TimeFlipDevice.query.count())
+
+        response = self.client.post(flask.url_for('api.timeflips'), json={
+            'address': self.device.address,
+            'password': self.device.password
+        })
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(self.num_devices, TimeFlipDevice.query.count())
+
     def test_add_device_wrong_address_ko(self):
         self.assertEqual(self.num_devices, TimeFlipDevice.query.count())
 

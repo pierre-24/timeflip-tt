@@ -59,7 +59,7 @@ function showToast(message, scheme="bg-danger") {
     let $toast = document.getElementById('tp-toast').content.cloneNode(true);
 
     $toast.querySelector('.toast-body').innerHTML = message;
-    let $t = $toast.querySelector('.toast')
+    let $t = $toast.querySelector('.toast');
     scheme.split(" ").forEach((cl) => {
         $t.classList.add(cl);
     });
@@ -234,18 +234,20 @@ export class TFAddController extends Controller {
                     // and display toast
                     showToast("Device successfully added!", "bg-primary");
                 }).catch((err) => { // be more explicit!
-                    err.metadata.json().then((data) => {
-                       let msg = 'Please correct the following fields: ';
-                       if ('address' in data.errors.json) {
-                           msg += `address (${data.errors.json.address[0]})`;
-                       }
-                       if ('password' in data.errors.json) {
-                           if ('address' in data.errors.json)
-                               msg += ', ';
-                           msg += `password (${data.errors.json.password[0]})`;
-                       }
-                       showToast(msg);
-                    });
+                    if (err.metadata.status === 422) {
+                        err.metadata.json().then((data) => {
+                           let msg = 'Please correct the following fields: ';
+                           if ('address' in data.errors.json) {
+                               msg += `address (${data.errors.json.address[0]})`;
+                           }
+                           if ('password' in data.errors.json) {
+                               if ('address' in data.errors.json)
+                                   msg += ', ';
+                               msg += `password (${data.errors.json.password[0]})`;
+                           }
+                           showToast(msg);
+                        });
+                    }
                 });
         }
     }
