@@ -1,13 +1,52 @@
 "use strict";
 
+/* Constants */
 const ESC_KEY = 27;
 const ENTER_KEY = 13;
+
+const NAMES = [
+    "teddy bears",
+    "unicorns",
+    "cats",
+    "dogs",
+    "bunnies",
+    "alcoholic beverages",
+    "pints",
+    "garlic bread",
+    "minimal amount of cheese",
+    "tons of pizza",
+    "moderate amount of salt",
+    "problems",
+    "issues",
+    "solutions",
+    "management",
+    "pencils",
+    "cars",
+    "person in charge",
+    "cuddles"
+];
+
+const ACTIONS = [
+    "Repositioning",
+    "Dealing with",
+    "Acting on",
+    "Empowering",
+    "Removing",
+    "Adding",
+    "Creating",
+    "Choosing",
+    "Firing",
+    "Tasking with",
+];
+
+/* Utilities */
+function randomName() {
+    return ACTIONS.random() + " " + NAMES.random();
+}
 
 Array.prototype.random = function () {
   return this[Math.floor((Math.random()*this.length))];
 };
-
-import { Controller } from "https://unpkg.com/@hotwired/stimulus@3.0.0/dist/stimulus.js";
 
 class APICallError extends Error {
     constructor(status, metadata) {
@@ -65,6 +104,9 @@ function apiCall(address, method='get', body= null) {
     });
 }
 
+/* Controllers */
+import { Controller } from "https://unpkg.com/@hotwired/stimulus@3.0.0/dist/stimulus.js";
+
 export class CategoriesController extends Controller {
     static get targets() { return ["elms"]; }
     static get values() { return {n: Number}; }
@@ -109,7 +151,7 @@ export class CategoriesController extends Controller {
 
     newCategory() {
         this.nValue++;
-        apiCall('categories/', 'post', {'name': `New category #${this.nValue}`})
+        apiCall('categories/', 'post', {'name': randomName()})
             .then((data) => this.addCategory(data));
     }
 }
@@ -168,7 +210,7 @@ export class CategoryController extends Controller {
         apiCall(
             `categories/${this.idValue}/`,
             'post',
-            {'name': `Task #${$ul.childElementCount + 1}`, 'color': this.randomColor}
+            {'name': randomName(), 'color': this.randomColor}
             ).then((task) => {
                 $task.querySelector('li').dataset.taskIdValue = task.id;
                 $task.querySelector('li').dataset.taskColorValue = task.color;
@@ -224,19 +266,19 @@ export class TaskController extends Controller {
     }
 
     destroy() {
-        /*let $element = this.element.parentNode.parentNode;
+        let $element = this.element;
         showModal(
-            "Delete category",
-            `Do you really want to delete "${this.nameTarget.innerText}" and all its tasks?`,
-            "Delete category",
+            "Delete task",
+            `Do you really want to delete "${this.nameTarget.innerText}"?`,
+            "Delete task",
             (modal, event) => {
-                apiCall(`categories/${this.idValue}/`, 'delete').then(
+                apiCall(`tasks/${this.idValue}/`, 'delete').then(
                     () => {
                         $element.parentNode.removeChild($element);
                         modal.hide();
                     }
                 );
-            });*/
+            });
     }
 
     startEdit() {
