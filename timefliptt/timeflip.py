@@ -58,11 +58,11 @@ def daemon_status():
 
     with _lock:
         if _loop is None:
-            return 'Stopped'
+            return {'daemon_status': 'stopped'}
         elif _timeflip_address == '':
-            return 'Disconnected'
+            return {'daemon_status': 'disconnected'}
         else:
-            return 'Connected to {}'.format(_timeflip_address)
+            return {'daemon_status': 'connected', 'address': _timeflip_address}
 
 
 def soft_connect(address: str, password: str):

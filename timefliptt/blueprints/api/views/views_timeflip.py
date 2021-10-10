@@ -97,7 +97,14 @@ class TimeFlipConnectionView(MethodView):
         """See the status of the daemon
         """
 
-        return jsonify(status='ok', daemon_status=daemon_status())
+        status = daemon_status()
+        if 'address' in status:
+            device = TimeFlipDevice.query.filter(TimeFlipDevice.address.is_(status['address'])).first()
+            if device is not None:
+                del status['address']
+                status['timeflip_device'] = TimeFlipDeviceSchema().dump(device)
+
+        return jsonify(status='ok', **status)
 
     def delete(self) -> Response:
         """Disconnect from any device
