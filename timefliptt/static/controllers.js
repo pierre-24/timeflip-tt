@@ -509,7 +509,7 @@ export class FacetsToTaskController extends Controller {
 
 export class FacetToTaskController extends Controller {
     static get values() { return {facet: Number, task: Number, device: Number}; }
-    static get targets() { return ["task"]; }
+    static get targets() { return ["task", "inputTask", "modify"]; }
 
     destroy() {
         let $element = this.element;
@@ -525,5 +525,45 @@ export class FacetToTaskController extends Controller {
                     }
                 );
             });
+    }
+
+    edit() {
+        apiCall(`tasks/`)
+            .then((data) => {
+                this.inputTaskTarget.innerHTML = ""; // remove previous
+                data.tasks.forEach((task) => {
+                    let $opt = document.createElement("option");
+                    $opt.value = task.id;
+                    $opt.innerText = task.name;
+                    this.inputTaskTarget.append($opt);
+                });
+
+                this.inputTaskTarget.value = this.taskValue;
+
+                this.startEdit();
+            });
+        }
+
+    update() {
+        apiCall(
+            `timeflips/${this.deviceValue}/facets/${this.facetValue}/`,
+            'put',
+            { task: this.inputTaskTarget.value }
+            ).then((ftt) => {
+                this.taskTarget.innerText = ftt.task.name;
+                this.taskValue = ftt.task.id;
+
+                this.stopEdit();
+            });
+    }
+
+    startEdit() {
+        this.modifyTarget.hidden = false;
+        this.taskTarget.hidden = true;
+    }
+
+    stopEdit() {
+        this.modifyTarget.hidden = true;
+        this.taskTarget.hidden = false;
     }
 }
