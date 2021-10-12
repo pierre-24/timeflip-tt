@@ -577,6 +577,32 @@ export class TimeflipInfoController extends Controller {
                 }
             });
     }
+
+    resetCalibration() {
+        apiCall(`timeflips/${this.idValue}/handle`)
+            .then((data) => {
+                showModal(
+                'Change Calibration',
+                `Current device's calibration is <code>${data.calibration}</code>. Do you really want to change? Check your correspondences first!`,
+                "Change",
+                (modal, event) => {
+                    apiCall(
+                        `timeflips/${this.idValue}/handle`, 'put', {change_calibration: true}
+                        ).then((data) => {
+                            showToast("Calibration was changed", "bg-info");
+                        }).catch((error) => {
+                            showToast(error.message);
+                        });
+                    modal.hide();
+                });
+            }).catch((error) => {
+                if (error.metadata.status === 403)  {
+                    showToast('Please connect to TimeFlip first');
+                } else {
+                    showToast(error.message);
+                }
+            });
+    }
 }
 
 export class FacetToTaskController extends Controller {
