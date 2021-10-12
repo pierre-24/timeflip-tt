@@ -248,7 +248,7 @@ class TimeFlipHandleView(MethodView):
     @parser.use_args(TimeFlipView.TimeFlipDeviceSimpleSchema, location='view_args')
     @parser.use_kwargs(
         {
-            'name': fields.Str(),
+            'name': fields.Str(validate=validate.Length(min=1, max=19)),
             'password': fields.Str(validate=validate.Length(equal=6)),
             'change_calibration': fields.Bool()
         }, location='json')

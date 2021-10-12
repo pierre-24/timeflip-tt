@@ -200,6 +200,20 @@ export class TFConnectController extends Controller {
     }
 }
 
+function deal_with_tf_info_error_422(metadata) {
+    metadata.json().then((data) => {
+
+       let errors = [];
+       ['address', 'name', 'password'].forEach((field) => {
+           if (field in data.errors.json) {
+               errors.push(`${field} (${data.errors.json[field][0]})`);
+           }
+       });
+
+       showToast(`Please correct field${ errors.length > 1 ? 's' : ''}: ${errors.join(', ')}`);
+    });
+}
+
 export class TFAddController extends Controller {
     static get targets() { return ["list", "address", "password"]; }
     connect() {
@@ -248,18 +262,7 @@ export class TFAddController extends Controller {
                     showToast("Device successfully added!", "bg-primary");
                 }).catch((err) => { // be more explicit!
                     if (err.metadata.status === 422) {
-                        err.metadata.json().then((data) => {
-                           let msg = 'Please correct the following fields: ';
-                           if ('address' in data.errors.json) {
-                               msg += `address (${data.errors.json.address[0]})`;
-                           }
-                           if ('password' in data.errors.json) {
-                               if ('address' in data.errors.json)
-                                   msg += ', ';
-                               msg += `password (${data.errors.json.password[0]})`;
-                           }
-                           showToast(msg);
-                        });
+                        deal_with_tf_info_error_422(err.metadata);
                     } else {
                         showToast(err.message);
                     }
@@ -567,6 +570,8 @@ export class TimeflipInfoController extends Controller {
             }).catch((error) => {
                 if (error.metadata.status === 403)  {
                     showToast('Please connect to TimeFlip first');
+                } else if (error.metadata.status === 422) {
+                    deal_with_tf_info_error_422(error.metadata);
                 } else {
                     showToast(error.message);
                 }

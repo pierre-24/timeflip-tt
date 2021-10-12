@@ -69,7 +69,7 @@ class TimeFlipDeviceSchema(BaseSchema):
     address = auto_field(required=True, validate=validate_mac)
     password = auto_field(required=True, validate=validate.Length(equal=6))
 
-    name = auto_field(validate=validate.Length(max=19))
+    name = auto_field(validate=validate.Length(min=1, max=19))
     calibration = auto_field()
 
 
