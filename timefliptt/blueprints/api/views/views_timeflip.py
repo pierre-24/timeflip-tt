@@ -167,7 +167,7 @@ class TimeFlipHandleView(MethodView):
             'status': 'ok',
             'address': client.address,
             'password': device.password,
-            'name': await client.device_name(),
+            'name': device.name,  # note: use device.name, since name is not updated on device while connected
             'facet': client.current_facet_value,
             'battery': await client.battery_level(),
             'paused': client.paused,

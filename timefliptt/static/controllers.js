@@ -49,8 +49,8 @@ Array.prototype.random = function () {
 };
 
 class APICallError extends Error {
-    constructor(status, metadata) {
-        super(`Response code was ${status}`);
+    constructor(metadata) {
+        super(`Response code was ${metadata.status}`);
         this.metadata = metadata;
     }
 }
@@ -100,8 +100,7 @@ function apiCall(address, method='get', body= null) {
 
     return fetch(`/api/${address}`, params).then(function (response) {
         if (!response.ok) {
-            showToast(`Error code was ${response.status} while calling <code class="text-white">${address}</code>`);
-            throw new APICallError(response.status, response);
+            throw new APICallError(response);
         } else {
             return response.json();
         }
@@ -116,41 +115,47 @@ export class TFConnectController extends Controller {
     static get values() { return {id: Number}; }
 
     connect() {
-        apiCall(`/timeflips/daemon`).then((data) => {
-            if (data.daemon_status === "connected") {
-                this.idValue = data.timeflip_device.id;
-                this.status();
-            } else {
-                this.listTF();
-            }
-        });
+        apiCall(`/timeflips/daemon`)
+            .then((data) => {
+                if (data.daemon_status === "connected") {
+                    this.idValue = data.timeflip_device.id;
+                    this.status();
+                } else {
+                    this.listTF();
+                }
+            }).catch((error) => {
+                showToast(error.message);
+            });
     }
 
     listTF() {
-        apiCall('/timeflips').then((data) => {
-            if ("timeflip_devices" in data && data.timeflip_devices.length > 0) {
-                this.inputTFTarget.innerHTML = ''; // remove previous options, if any
-                this.connectTarget.hidden = false;
-                data.timeflip_devices.forEach((device) => {
+        apiCall('/timeflips')
+            .then((data) => {
+                if ("timeflip_devices" in data && data.timeflip_devices.length > 0) {
+                    this.inputTFTarget.innerHTML = ''; // remove previous options, if any
+                    this.connectTarget.hidden = false;
+                    data.timeflip_devices.forEach((device) => {
+                        let n = document.createElement('option');
+                        n.value = device.id;
+
+                        if(device.name != null)
+                            n.innerText = `${device.name} (${device.address})`;
+                        else
+                            n.innerText = device.address;
+
+                       this.inputTFTarget.append(n);
+                    });
+                } else {
                     let n = document.createElement('option');
-                    n.value = device.id;
-
-                    if(device.name != null)
-                        n.innerText = `${device.name} (${device.address})`;
-                    else
-                        n.innerText = device.address;
-
-                   this.inputTFTarget.append(n);
-                });
-            } else {
-                let n = document.createElement('option');
-                n.innerText = "No timeflip registered";
-                this.inputTFTarget.append(n);
-                this.connectTarget.hidden = true;
-            }
-            this.timeflipsTarget.hidden = false;
-            this.connectTarget.disabled = false;
-        });
+                    n.innerText = "No timeflip registered";
+                    this.inputTFTarget.append(n);
+                    this.connectTarget.hidden = true;
+                }
+                this.timeflipsTarget.hidden = false;
+                this.connectTarget.disabled = false;
+            }).catch((error) => {
+                showToast(error.message);
+            });
     }
 
     connectTF() {
@@ -164,6 +169,8 @@ export class TFConnectController extends Controller {
                 this.update_status(data);
                 this.timeflipsTarget.hidden = true;
                 this.viewTarget.hidden = false;
+            }).catch((error) => {
+                showToast(error.message);
             });
     }
 
@@ -172,6 +179,8 @@ export class TFConnectController extends Controller {
             .then((data) => {
                 this.update_status(data);
                 this.viewTarget.hidden = false;
+            }).catch((error) => {
+                showToast(error.message);
             });
     }
 
@@ -194,27 +203,30 @@ export class TFConnectController extends Controller {
 export class TFAddController extends Controller {
     static get targets() { return ["list", "address", "password"]; }
     connect() {
-        apiCall('devices/').then((data) => {
-            this.listTarget.innerHTML = '';
+        apiCall('devices/')
+            .then((data) => {
+                this.listTarget.innerHTML = '';
 
-            data.discovered.forEach((device) => {
-                if (device.id < 0) {
+                data.discovered.forEach((device) => {
+                    if (device.id < 0) {
 
-                let $b = document.createElement("button");
-                $b.classList.add("btn");
-                $b.classList.add("btn-primary");
-                $b.innerText = `${device.name} (${device.address})`;
-                $b.addEventListener('click', () => {
-                    this.addressTarget.value = device.address;
+                    let $b = document.createElement("button");
+                    $b.classList.add("btn");
+                    $b.classList.add("btn-primary");
+                    $b.innerText = `${device.name} (${device.address})`;
+                    $b.addEventListener('click', () => {
+                        this.addressTarget.value = device.address;
+                    });
+                    this.listTarget.append($b);
+                    }
                 });
-                this.listTarget.append($b);
-                }
-            });
 
-            if (this.listTarget.childElementCount === 0) {
-                this.listTarget.innerText = "No (new) devices found :'(";
-            }
-        });
+                if (this.listTarget.childElementCount === 0) {
+                    this.listTarget.innerText = "No (new) devices found :'(";
+                }
+            }).catch((error) => {
+                showToast(error.message);
+            });
     }
 
     addTF() {
@@ -248,6 +260,8 @@ export class TFAddController extends Controller {
                            }
                            showToast(msg);
                         });
+                    } else {
+                        showToast(err.message);
                     }
                 });
         }
@@ -260,11 +274,13 @@ export class CategoriesController extends Controller {
     connect() {
         let _this = this;
         apiCall('categories/')
-        .then(function (data) {
-            data.categories.forEach((category) => {
-                _this.addCategory(category);
+            .then(function (data) {
+                data.categories.forEach((category) => {
+                    _this.addCategory(category);
+                });
+            }).catch((error) => {
+                    showToast(error.message);
             });
-        });
     }
 
     addCategory(category) {
@@ -312,10 +328,12 @@ export class CategoryController extends Controller {
 
     update() {
         apiCall(`categories/${this.idValue}/`, 'put', {'name': this.inputTarget.value})
-        .then((data) => {
-            this.stopEdit();
-            this.nameTarget.innerText = data.name;
-        });
+            .then((data) => {
+                this.stopEdit();
+                this.nameTarget.innerText = data.name;
+            }).catch((error) => {
+                showToast(error.message);
+            });
     }
 
     keyup(event) {
@@ -339,6 +357,8 @@ export class CategoryController extends Controller {
                         modal.hide();
                     }
                 );
+            }).catch((error) => {
+                showToast(error.message);
             });
     }
 
@@ -363,6 +383,8 @@ export class CategoryController extends Controller {
                 $task.querySelector('.task-color').style.backgroundColor = task.color;
 
                 $ul.append($task);
+            }).catch((error) => {
+                showToast(error.message);
             });
     }
 
@@ -392,13 +414,14 @@ export class TaskController extends Controller {
         apiCall(`tasks/${this.idValue}/`, 'patch', {
             'name': this.inputNameTarget.value,
             'color': this.inputColorTarget.value
-        })
-        .then((data) => {
-            this.stopEdit();
-            this.nameTarget.innerText = data.name;
-            this.colorValue = data.color;
-            this.colorTarget.style.backgroundColor = data.color;
-        });
+        }).then((data) => {
+                this.stopEdit();
+                this.nameTarget.innerText = data.name;
+                this.colorValue = data.color;
+                this.colorTarget.style.backgroundColor = data.color;
+            }).catch((error) => {
+                showToast(error.message);
+            });
     }
 
     keyup(event) {
@@ -421,7 +444,9 @@ export class TaskController extends Controller {
                         $element.parentNode.removeChild($element);
                         modal.hide();
                     }
-                );
+                ).catch((error) => {
+                    showToast(error.message);
+                });
             });
     }
 
@@ -436,18 +461,20 @@ export class TaskController extends Controller {
     }
 }
 
-export class FacetsToTaskController extends Controller {
+export class TimeflipInfoController extends Controller {
     static get values() { return {id: Number}; }
-    static get targets() { return ["inputFacet", "inputTask", "append", "tbody"]; }
+    static get targets() { return ["inputFacet", "inputTask", "append", "tbody", "inputName", "inputPassword"]; }
 
     connect() {
         apiCall(`timeflips/${this.idValue}/facets/`)
             .then((data) => {
                 data.facet_to_task.forEach((ftt) => this.addFTT(ftt));
+            }).catch((error) => {
+                showToast(error.message);
             });
     }
 
-    create() {
+    createFTT() {
         apiCall(`tasks/`)
             .then((data) => {
                 // list tasks
@@ -477,6 +504,8 @@ export class FacetsToTaskController extends Controller {
                 $parent.append($e);
 
                 this.appendTarget.hidden = false;
+            }).catch((error) => {
+                showToast(error.message);
             });
     }
 
@@ -499,7 +528,7 @@ export class FacetsToTaskController extends Controller {
         this.appendTarget.hidden = true;
     }
 
-    submit() {
+    submitFTT() {
         apiCall(
             `timeflips/${this.idValue}/facets/${this.inputFacetTarget.value}/`,
             'put',
@@ -507,6 +536,40 @@ export class FacetsToTaskController extends Controller {
             ).then((ftt) => {
                 this.addFTT(ftt);
                 this.appendTarget.hidden = true;
+            }).catch((error) => {
+                showToast(error.message);
+            });
+    }
+
+    editInfo() {
+        apiCall(`timeflips/${this.idValue}/handle`)
+            .then((data) => {
+                this.inputNameTarget.value = data.name;
+                this.inputPasswordTarget.value = data.password;
+
+                new bootstrap.Modal(document.querySelector('#timeflipInfoModal')).show();
+            }).catch((error) => {
+                if (error.metadata.status === 403)  {
+                    showToast('Please connect to TimeFlip first');
+                } else {
+                    showToast(error.message);
+                }
+            });
+    }
+
+    submitInfo() {
+        apiCall(
+            `timeflips/${this.idValue}/handle`,
+            'put',
+            {name: this.inputNameTarget.value, password: this.inputPasswordTarget.value}
+            ).then((data) => {
+                showToast('Info were updated', 'bg-info');
+            }).catch((error) => {
+                if (error.metadata.status === 403)  {
+                    showToast('Please connect to TimeFlip first');
+                } else {
+                    showToast(error.message);
+                }
             });
     }
 }

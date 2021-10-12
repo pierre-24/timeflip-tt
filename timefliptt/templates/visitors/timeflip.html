@@ -25,12 +25,38 @@
         </tr>
     </template>
 
-    <div data-controller="facetstotask" data-facetstotask-id-value="{{ timeflip_device.id }}">
+    <div data-controller="timeflipinfo" data-timeflipinfo-id-value="{{ timeflip_device.id }}">
         <div class="btn-group mb-4">
-            <button class="btn btn-outline-primary"><i class="bi bi-pen"></i> Edit TimeFlip</button>
+            <button class="btn btn-outline-primary" data-action="timeflipinfo#editInfo"><i class="bi bi-pen"></i> Edit TimeFlip</button>
             <button class="btn btn-outline-primary"><i class="bi bi-hammer"></i> Reset calibration</button>
             <button class="btn btn-outline-primary"><i class="bi bi-list-check"></i> Fetch history</button>
         </div>
+
+        <div id="timeflipInfoModal" class="modal fade" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Modify TimeFlip Info</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                  <div class="mb-3">
+                      <label for="name">Name</label>
+                      <input class="form-control" type="text" id="name" name="name" data-timeflipinfo-target="inputName">
+                  </div>
+                  <div class="mb-3">
+                      <label for="password">Password</label>
+                      <input class="form-control" type="text" id="password" name="password" data-timeflipinfo-target="inputPassword">
+                  </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary action" data-action="timeflipinfo#submitInfo" data-bs-dismiss="modal">Submit</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <table class="table">
             <thead>
                 <tr>
@@ -39,21 +65,21 @@
                     <th scope="col">Action</th>
                 </tr>
             </thead>
-            <tbody data-facetstotask-target="tbody">
-            <tr data-facetstotask-target="append" hidden>
-                <td id="facet"><select data-facetstotask-target="inputFacet"></select></td>
-                <td id="task"><select data-facetstotask-target="inputTask"></select></td>
+            <tbody data-timeflipinfo-target="tbody">
+            <tr data-timeflipinfo-target="append" hidden>
+                <td id="facet"><select  class="form-control" data-timeflipinfo-target="inputFacet"></select></td>
+                <td id="task"><select  class="form-control" data-timeflipinfo-target="inputTask"></select></td>
                 <td>
                     <div class="btn-group btn-group-sm">
-                        <button type="button" class="btn btn-primary" data-action="facetstotask#cancel"><i class="bi bi-x"></i></button>
-                        <button type="button" class="btn btn-primary" data-action="facetstotask#submit"><i class="bi bi-check"></i></button>
+                        <button type="button" class="btn btn-primary" data-action="timeflipinfo#cancel"><i class="bi bi-x"></i></button>
+                        <button type="button" class="btn btn-primary" data-action="timeflipinfo#submitFTT"><i class="bi bi-check"></i></button>
                     </div>
                 </td>
             </tr>
             </tbody>
         </table>
         <p>
-            <button class="btn btn-primary" data-action="facetstotask#create"><i class="bi bi-plus"></i> Add a new correspondence</button>
+            <button class="btn btn-primary" data-action="timeflipinfo#createFTT"><i class="bi bi-plus"></i> Add a new correspondence</button>
         </p>
     </div>
 {% endblock %}
@@ -63,11 +89,11 @@
 
     <script type="module">
     import {
-        FacetsToTaskController,
+        TimeflipInfoController,
         FacetToTaskController
     } from "{{ url_for('static', filename='controllers.js') }}";
 
-    Stimulus.register("facetstotask", FacetsToTaskController);
+    Stimulus.register("timeflipinfo", TimeflipInfoController);
     Stimulus.register("facettotask", FacetToTaskController);
 
     </script>
