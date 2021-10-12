@@ -552,7 +552,7 @@ export class TimeflipInfoController extends Controller {
 
                 new bootstrap.Modal(document.querySelector('#timeflipInfoModal')).show();
             }).catch((error) => {
-                if (error.metadata.status === 403)  {
+                if (error.metadata.status === 401)  {
                     showToast('Please connect to TimeFlip first');
                 } else {
                     showToast(error.message);
@@ -568,7 +568,7 @@ export class TimeflipInfoController extends Controller {
             ).then((data) => {
                 showToast('Info were updated', 'bg-info');
             }).catch((error) => {
-                if (error.metadata.status === 403)  {
+                if (error.metadata.status === 401)  {
                     showToast('Please connect to TimeFlip first');
                 } else if (error.metadata.status === 422) {
                     deal_with_tf_info_error_422(error.metadata);
@@ -596,12 +596,35 @@ export class TimeflipInfoController extends Controller {
                     modal.hide();
                 });
             }).catch((error) => {
-                if (error.metadata.status === 403)  {
+                if (error.metadata.status === 401)  {
                     showToast('Please connect to TimeFlip first');
                 } else {
                     showToast(error.message);
                 }
             });
+    }
+
+    fetchHistory() {
+        showModal(
+        'Fetch history',
+        `Do you want to fetch history? This may take a few seconds!`,
+        "Fetch",
+        (modal, event) => {
+            apiCall(
+                `timeflips/${this.idValue}/history`, 'post'
+                ).then((data) => {
+                    showToast(`Fetched ${data.history_elements.length} history elements!`, "bg-info");
+                }).catch((error) => {
+                    if (error.metadata.status === 401)  {
+                        showToast('Please connect to TimeFlip first');
+                    } else if (error.metadata.status === 409)  {
+                        error.metadata.json().then(data => showToast(data.message));
+                    } else {
+                        showToast(error.message);
+                    }
+                });
+            modal.hide();
+        });
     }
 }
 

@@ -183,7 +183,7 @@ class TimeFlipHandleView(MethodView):
 
         if device is not None:
             if not connected_to(device.address):
-                flask.abort(403, description='Not connected to TimeFlip with id={}'.format(device.id))
+                flask.abort(401, description='Not connected to TimeFlip with id={}'.format(device.id))
 
             try:
                 return jsonify(run_coro(self.get_info, device=device))
@@ -258,7 +258,7 @@ class TimeFlipHandleView(MethodView):
 
         if device is not None:
             if not connected_to(device.address):
-                flask.abort(403, description='Not connected to TimeFlip with id={}'.format(device.id))
+                flask.abort(401, description='Not connected to TimeFlip with id={}'.format(device.id))
 
             try:
                 if 'name' in kwargs:
@@ -417,7 +417,7 @@ class TimeFlipHistoryView(MethodView):
 
         if device is not None:
             if not connected_to(device.address):
-                flask.abort(403, description='Not connected to TimeFlip with id={}'.format(device.id))
+                flask.abort(401, description='Not connected to TimeFlip with id={}'.format(device.id))
 
             # check calibration
             try:
@@ -426,7 +426,10 @@ class TimeFlipHistoryView(MethodView):
                 return jsonify(status='ko', error=str(e))
 
             if calibration != device.calibration:
-                flask.abort(403, description='Calibration does not match')
+                flask.abort(
+                    409,
+                    description='Calibration of the device ({}) does not match the one registered ({}).'.format(
+                        calibration, device.calibration))
 
             # get corresponding task
             ftts = FacetToTask.query.filter(FacetToTask.timeflip_device_id.is_(device.id)).all()

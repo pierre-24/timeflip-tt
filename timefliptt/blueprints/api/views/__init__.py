@@ -21,8 +21,9 @@ def handle_error(err):
         return flask.jsonify(data), err.code
 
 
-@blueprint.errorhandler(404)
 @blueprint.errorhandler(403)
+@blueprint.errorhandler(404)
+@blueprint.errorhandler(409)
 def handle_error_s(err: Union[NotFound, Forbidden]):
     return flask.jsonify(status=err.code, message=err.description), err.code
 
