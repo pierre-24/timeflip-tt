@@ -646,7 +646,9 @@ export class FacetToTaskController extends Controller {
                         $element.parentNode.removeChild($element);
                         modal.hide();
                     }
-                );
+                ).catch((error) => {
+                    showToast(error.message);
+                });
             });
     }
 
@@ -692,5 +694,83 @@ export class FacetToTaskController extends Controller {
     stopEdit() {
         this.modifyTarget.hidden = true;
         this.taskTarget.hidden = false;
+    }
+}
+
+export class HistoryController extends Controller {
+    static get targets() { return ["tbody", "previous", "next", "size", "page"]; }
+
+    connect() {
+        this.refresh();
+    }
+
+    showPage(page, page_size) {
+        apiCall(`history/?page=${page}&page_size=${page_size}`)
+            .then((data) => {
+                // paginate
+                if (page > 0)
+                    this.previousTarget.classList.remove('disabled');
+                else
+                    this.previousTarget.classList.add('disabled');
+                if (page < data.total_pages - 1)
+                    this.nextTarget.classList.remove('disabled');
+                else
+                    this.nextTarget.classList.add('disabled');
+
+                this.pageTarget.innerHTML = "";
+                for(let i=0; i < data.total_pages; i++) {
+                    let $opt = document.createElement("option");
+                    $opt.value = i;
+                    $opt.innerText = i + 1;
+                    this.pageTarget.append($opt);
+                }
+                this.pageTarget.value = page;
+
+                // fill elements
+                this.tbodyTarget.innerHTML = '';
+                data.history.forEach((element) => {
+                    this.addHistoryElement(element);
+                });
+
+            }).catch((error) => {
+                if (error.metadata.status === 404)  {
+                    showToast('The requested page does not exists');
+                } else {
+                    showToast(error.message);
+                }
+            });
+    }
+
+    addHistoryElement(element) {
+        let $history = document.getElementById('tp-history').content.cloneNode(true);
+        let $control = $history.querySelector('tr');
+
+        $control.dataset.historyelmIdValue = element.id;
+        $control.dataset.historyelmTaskValue = element.task !== null ? element.task.id : -1;
+
+        $history.querySelector('.t-id').innerText = element.id;
+        $history.querySelector('.t-start').innerText = element.start;
+        $history.querySelector('.t-end').innerText = element.end;
+        $history.querySelector('.t-facet').innerText = element.original_facet;
+
+        if(element.task !== null)
+            $history.querySelector('.t-task').innerText = element.task.name;
+
+        if(element.comment !== null)
+            $history.querySelector('.t-comment').innerText = element.comment;
+
+        this.tbodyTarget.append($history);
+    }
+
+    paginate({params: {shift}}) {
+        if (this.pageValue + shift < 0) {
+            showToast('Fetch negative page?!?');
+        } else {
+            this.showPage(Number(this.pageTarget.value) + shift, this.sizeTarget.value);
+        }
+    }
+
+    refresh() {
+        this.showPage(Number(this.pageTarget.value), this.sizeTarget.value);
     }
 }

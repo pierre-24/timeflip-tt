@@ -5,5 +5,66 @@
 
 {% block content %}
     <h1>History</h1>
-    <p>this is the content</p>
+
+    <template id="tp-history">
+    <tr data-controller="historyelm">
+        <td class="t-id"></td>
+        <td class="t-start"></td>
+        <td class="t-end"></td>
+        <td class="t-facet"></td>
+        <td class="t-task"></td>
+        <td class="t-comment"></td>
+        <td>
+            <div class="btn-group btn-group-sm">
+                <button type="button" class="btn btn-primary" data-action="historyelm#edit"><i class="bi bi-pen"></i></button>
+                <button type="button" class="btn btn-danger" data-action="historyelm#destroy"><i class="bi bi-x"></i></button>
+            </div>
+        </td>
+    </tr>
+    </template>
+
+    <div data-controller="history">
+        <p class="input-group input-group-sm" style="max-width: 200px">
+            <span class="input-group-text">Page size</span>
+            <select data-history-target="size" class="form-control" data-action="history#refresh">
+                <option value="10" selected>10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+        </p>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Start</th>
+                    <th scope="col">End</th>
+                    <th scope="col">Facet</th>
+                    <th scope="col">Task</th>
+                    <th scope="col">Comment</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody data-history-target="tbody"></tbody>
+        </table>
+        <ul class="pagination" data-history-target="pagination">
+            <li class="page-item disabled" data-history-target="previous"><a class="page-link" href="#" data-action="history#paginate" data-history-shift-param="-1">Previous</a></li>
+            <select class="form-control" style="width: 5rem; border-radius: 0; border-left: none" data-history-target="page" data-action="history#refresh">
+                <option value="0">1</option>
+            </select>
+            <li class="page-item disabled" data-history-target="next"><a class="page-link" href="#" data-action="history#paginate" data-history-shift-param="1">Next</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+
+    <script type="module">
+    import {
+        HistoryController,
+    } from "{{ url_for('static', filename='controllers.js') }}";
+
+    Stimulus.register("history", HistoryController);
+    </script>
 {% endblock %}
