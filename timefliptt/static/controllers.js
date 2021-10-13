@@ -76,9 +76,11 @@ function showModal(title, message, button, action) {
 
     let modal = new bootstrap.Modal($modal);
     let $action = $modal.querySelector('.action');
+    let $newAction = $action.cloneNode(true);
+    $newAction.innerHTML = button;
+    $action.parentNode.replaceChild($newAction, $action);
 
-    $action.innerHTML = button;
-    $action.addEventListener(
+    $newAction.addEventListener(
         'click',
         (event) => {action(modal, event); },
         {once: true});
@@ -583,13 +585,13 @@ export class TimeflipInfoController extends Controller {
             .then((data) => {
                 showModal(
                 'Change Calibration',
-                `Current device's calibration is <code>${data.calibration}</code>. Do you really want to change? Check your correspondences first!`,
+                `Current calibration is <code>${data.calibration}</code> in database (device's calibration is <code>${data.device_calibration}</code>). Do you really want to change?`,
                 "Change",
                 (modal, event) => {
                     apiCall(
                         `timeflips/${this.idValue}/handle`, 'put', {change_calibration: true}
                         ).then((data) => {
-                            showToast("Calibration was changed", "bg-info");
+                            showToast(`Calibration was changed to <code class="text-white">${data.calibration}</code>.`, "bg-info");
                         }).catch((error) => {
                             showToast(error.message);
                         });

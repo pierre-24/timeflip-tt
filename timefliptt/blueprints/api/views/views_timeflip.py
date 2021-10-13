@@ -172,7 +172,8 @@ class TimeFlipHandleView(MethodView):
             'battery': await client.battery_level(),
             'paused': client.paused,
             'locked': client.locked,
-            'calibration': calibration,
+            'device_calibration': '0x{:02x}'.format(calibration),
+            'calibration': '0x{:02x}'.format(device.calibration),
             'calibration_ok': calibration == device.calibration
         }
 
@@ -428,8 +429,9 @@ class TimeFlipHistoryView(MethodView):
             if calibration != device.calibration:
                 flask.abort(
                     409,
-                    description='Calibration of the device ({}) does not match the one registered ({}).'.format(
-                        calibration, device.calibration))
+                    description='Calibration of the device (0x{:02x}) does not match the one registered (0x{:02x}).'
+                    .format(calibration, device.calibration)
+                )
 
             # get corresponding task
             ftts = FacetToTask.query.filter(FacetToTask.timeflip_device_id.is_(device.id)).all()
