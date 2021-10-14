@@ -845,13 +845,13 @@ export class HistoryElmController extends Controller {
     ]; }
 
     destroy() {
-        /*let $element = this.element;
+        let $element = this.element;
         showModal(
-            "Delete correspondence",
-            `Do you really want to delete correspondence to "${this.taskTarget.innerText}"?`,
-            "Delete correspondence",
+            "Delete element",
+            `Do you really want to delete this element?`,
+            "Delete element",
             (modal, event) => {
-                apiCall(`timeflips/${this.deviceValue}/facets/${this.facetValue}/`, 'delete').then(
+                apiCall(`history/${this.idValue}/`, 'delete').then(
                     () => {
                         $element.parentNode.removeChild($element);
                         modal.hide();
@@ -859,7 +859,7 @@ export class HistoryElmController extends Controller {
                 ).catch((error) => {
                     showToast(error.message);
                 });
-            });*/
+            });
     }
 
     edit() {
@@ -890,6 +890,8 @@ export class HistoryElmController extends Controller {
 
                 this.startEdit();
 
+            }).catch((error) => {
+                showToast(error.message);
             });
     }
 
@@ -925,6 +927,8 @@ export class HistoryElmController extends Controller {
                     this.commentTarget.innerText = element.comment;
 
                 this.stopEdit();
+            }).catch((error) => {
+                showToast(error.message);
             });
     }
 
