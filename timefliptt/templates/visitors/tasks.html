@@ -15,8 +15,10 @@
                         <button type="button" class="controller-btn" data-action="category#newTask"><i class="bi bi-plus"></i></button>
                         <button type="button" class="controller-btn" data-action="category#destroy"><i class="bi bi-x"></i></button>
                     </h5>
-                    <div data-category-target="modify" hidden>
-                        <input type="text" data-category-target="input" data-action="keyup->category#keyup" />
+                    <div class="input-group input-group-sm" data-category-target="modify" hidden>
+                        <input type="text" class="form-control" data-category-target="input" data-action="keyup->category#keyup" />
+                        <button class="btn btn-primary" data-action="category#stopEdit"><i class="bi bi-x"></i></button>
+                        <button class="btn btn-primary" data-action="category#update"><i class="bi bi-check"></i></button>
                     </div>
                 </div>
                 <ul class="list-group list-group-flush">
@@ -33,8 +35,10 @@
                 <button type="button" class="controller-btn" data-action="task#destroy"><i class="bi bi-x"></i></button>
             </div>
             <div class="input-group input-group-sm" data-task-target="modify" hidden>
-                <input type="color" data-task-target="inputColor" style="width: 2rem; height: 2rem" />
+                <input type="color" class="form-control form-control-color" data-task-target="inputColor" />
                 <input type="text" class="form-control" data-task-target="inputName"  style="height: 2rem" data-action="keyup->task#keyup" />
+                <button class="btn btn-primary" data-action="task#stopEdit"><i class="bi bi-x"></i></button>
+                <button class="btn btn-primary" data-action="task#update"><i class="bi bi-check"></i></button>
             </div>
         </li>
     </template>

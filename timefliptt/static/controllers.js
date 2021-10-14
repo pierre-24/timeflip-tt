@@ -10,8 +10,11 @@ const NAMES = [
     "cats",
     "dogs",
     "bunnies",
+    "drunk racoon",
+    "friendly bears",
     "alcoholic beverages",
     "pints",
+    "vast amount of alcohol",
     "garlic bread",
     "minimal amount of cheese",
     "tons of pizza",
@@ -21,6 +24,8 @@ const NAMES = [
     "solutions",
     "management",
     "pencils",
+    "pens",
+    "tons of paper clips",
     "cars",
     "person in charge",
     "cuddles"
@@ -36,7 +41,10 @@ const ACTIONS = [
     "Creating",
     "Choosing",
     "Firing",
-    "Tasking with",
+    "Tasking on",
+    "Declaring",
+    "Allowing",
+    "Integrating"
 ];
 
 /* Utilities */
