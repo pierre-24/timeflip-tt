@@ -31,3 +31,15 @@ footer  {
     margin-right: 8px;
     border-radius: 1rem;
 }
+
+.graph-cumulative .element {
+    height: 16px;
+}
+
+.graph-cumulative .element:first-child {
+    border-radius: 16px 0  0 16px;
+}
+
+.graph-cumulative .element:last-child {
+    border-radius: 0 16px 16px 0;
+}

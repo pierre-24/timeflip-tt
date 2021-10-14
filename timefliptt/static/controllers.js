@@ -132,6 +132,10 @@ function formatDuration(start, end) {
     let en = new Date(end);
 
     let diff = Math.floor((en - st) / 1000); // in secs
+    return formatDurationS(diff);
+}
+
+function formatDurationS(diff) {
     let diff_s = '';
 
     let mins = parseInt(diff / 60);
@@ -310,6 +314,46 @@ export class TFAddController extends Controller {
                     }
                 });
         }
+    }
+}
+
+export class GraphsController extends  Controller {
+    static get targets() { return ["setup", "cumulative", "perPeriod"]; }
+
+    connect() {
+        this.refresh();
+    }
+
+    refresh() {
+        let v = this.setupTarget.value.split(';');
+        let end = new Date();
+        end.setSeconds(0);
+        end.setMinutes(0);
+        end.setHours(0);
+        end.setDate(end.getDate() + 1);
+        let start = new Date(end);
+        start.setDate(end.getDate() - Number(v[0]));
+
+        apiCall(`statistics/cumulative/tasks/?start_date=${asUTC(start).toISOString().slice(0, 10)}&end_date=${asUTC(end).toISOString().slice(0, 10)}`)
+            .then((data) => {
+                this.cumulativeTarget.innerHTML = "";
+
+                data.tasks.forEach((task) => {
+                    let pc = (task.cumulative_time / data.cumulative_time * 100).toFixed(2);
+                    let $div = document.createElement('div');
+                    $div.classList.add('element');
+                    $div.style.width = `${pc}%`;
+                    $div.style.background = task.color;
+                    $div.title = `${task.name} (${formatDurationS(task.cumulative_time)} - ${pc}%)`;
+                    this.cumulativeTarget.append($div);
+                });
+            }).catch((err) => {
+                showToast(err.message);
+            });
+    }
+
+    makeCumulative(start, end) {
+
     }
 }
 

@@ -13,7 +13,7 @@ class GraphsView(RenderTemplateView):
     template_name = 'visitors/graphs.html'
 
 
-blueprint.add_url_rule('/graphs', view_func=GraphsView.as_view('graphs'))
+blueprint.add_url_rule('/', view_func=GraphsView.as_view('graphs'))
 
 
 # --- Timeflip

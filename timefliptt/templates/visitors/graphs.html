@@ -5,6 +5,28 @@
 
 {% block content %}
     <h1>Graphs</h1>
-    <p>To be continued</p>
+    <div data-controller="graphs">
+        <p>
+            <select data-graphs-target="setup" data-action="graphs#refresh">
+                <option value="1;3600">Today</option>
+                <option value="7;86400" selected>Last 7 days</option>
+                <option value="30;86400">Last 30 days</option>
+            </select>
+        </p>
+        <div data-graphs-target="cumulative" class="d-flex flex-row graph-cumulative"></div>
+        <div data-graphs-target="perPeriod"></div>
+    </div>
 {% endblock %}
 
+{% block scripts %}
+    {{ super() }}
+
+    <script type="module">
+    import {
+        GraphsController
+    } from "{{ url_for('static', filename='controllers.js') }}";
+
+    Stimulus.register("graphs", GraphsController);
+
+    </script>
+{% endblock %}
