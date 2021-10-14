@@ -47,7 +47,7 @@
 
     <div data-controller="history">
 
-        <div id="bulkEditModal" class="modal fade" tabindex="-1" aria-hidden="true">
+        <div id="bulkEditTaskModal" class="modal fade" tabindex="-1" aria-hidden="true">
           <div class="modal-dialog">
             <div class="modal-content">
               <div class="modal-header">
@@ -65,6 +65,24 @@
           </div>
         </div>
 
+        <div id="bulkEditCommentModal" class="modal fade" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Bulk modify comment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                  <input data-history-target="inputBulkComment" class="form-control">
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary action">Submit</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <p class="btn-group btn-group">
             <select data-history-target="size" data-action="history#refresh">
                 <option value="10" selected>10 per page</option>
@@ -72,8 +90,9 @@
                 <option value="50">50 per page</option>
                 <option value="100">100 per page</option>
             </select>
-            <button class="btn btn-outline-primary" data-action="history#modifyTaskChecked"><i class="bi bi-hammer"></i> Bulk modify task</button>
-            <button class="btn btn-outline-primary" data-action="history#destroyChecked"><i class="bi bi-x"></i> Bulk delete</button>
+            <button class="btn btn-outline-primary" data-action="history#modifyTaskChecked"><i class="bi bi-hammer"></i> Task</button>
+            <button class="btn btn-outline-primary" data-action="history#modifyCommentChecked"><i class="bi bi-chat-text"></i> Comment</button>
+            <button class="btn btn-outline-primary" data-action="history#destroyChecked"><i class="bi bi-x"></i> Delete</button>
         </p>
         <table class="table">
             <thead>

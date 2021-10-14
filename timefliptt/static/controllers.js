@@ -733,7 +733,7 @@ export class FacetToTaskController extends Controller {
 }
 
 export class HistoryController extends Controller {
-    static get targets() { return ["tbody", "previous", "next", "size", "page", "inputBulkTask"]; }
+    static get targets() { return ["tbody", "previous", "next", "size", "page", "inputBulkTask", "inputBulkComment"]; }
 
     connect() {
         this.refresh();
@@ -825,7 +825,7 @@ export class HistoryController extends Controller {
         });
     }
 
-    checked() {
+    get checked() {
         let checked = [];
         document.querySelectorAll('.t-checkbox').forEach((checkbox) => {
             if (checkbox.checked === true)
@@ -836,7 +836,7 @@ export class HistoryController extends Controller {
     }
 
     modifyTaskChecked() {
-        let checked = this.checked();
+        let checked = this.checked;
 
         if (checked.length == 0) {
             showToast('Select elements for bulk modify');
@@ -856,7 +856,7 @@ export class HistoryController extends Controller {
                     this.inputBulkTaskTarget.append($opt);
                 });
 
-                let $modal = document.getElementById('bulkEditModal');
+                let $modal = document.getElementById('bulkEditTaskModal');
                 let modal = new bootstrap.Modal($modal);
 
                 let $action = $modal.querySelector('.action');
@@ -882,8 +882,58 @@ export class HistoryController extends Controller {
         }
     }
 
-    destroyChecked() {
+    modifyCommentChecked() {
+        let checked = this.checked;
 
+        if (checked.length == 0) {
+            showToast('Select elements for bulk modify');
+        } else {
+            this.inputBulkCommentTarget.value = ""; // remove previous
+
+            let $modal = document.getElementById('bulkEditCommentModal');
+            let modal = new bootstrap.Modal($modal);
+
+            let $action = $modal.querySelector('.action');
+            let $cloned = $action.cloneNode(true);
+
+            $cloned.addEventListener('click', () => {
+               apiCall(`history/?id=${checked.join('&id=')}`, 'patch', {comment: this.inputBulkCommentTarget.value})
+                   .then((data) => {
+                       this.refresh();
+                       modal.hide();
+                       showToast(`Updated ${checked.length} element${checked.length>1? 's': ''}`, 'bg-info');
+                   }).catch((error) => {
+                       showModalMessage($modal, error.message);
+                   });
+            });
+            $action.parentNode.replaceChild($cloned, $action);
+
+            modal.show();
+        }
+    }
+
+    destroyChecked() {
+        let checked = this.checked;
+
+        if (checked.length == 0) {
+            showToast('Select elements for bulk delete');
+        } else {
+            showModal(
+                'Delete elements',
+                `Do you really want to delete ${checked.length} element${checked.length>1? 's': ''}?`,
+                'Delete',
+                (modal, event) => {
+                    apiCall(`history/?id=${checked.join('&id=')}`, 'delete')
+                       .then((data) => {
+                           this.refresh();
+                           modal.hide();
+                           showToast(`Delteted ${checked.length} element${checked.length>1? 's': ''}`, 'bg-info');
+                       }).catch((error) => {
+                           showModalMessage(modal._element, error.message);
+                       });
+                }
+            )
+        }
     }
 }
 
