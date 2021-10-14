@@ -109,6 +109,30 @@ function apiCall(address, method='get', body= null) {
     });
 }
 
+function formatDuration(start, end) {
+    let st = new Date(start);
+    let en = new Date(end);
+
+    let diff = Math.floor((en - st) / 1000); // in secs
+    let diff_s = '';
+
+    let mins = parseInt(diff / 60);
+    let hours = parseInt(diff / 60 / 60);
+    let days = parseInt(diff / 24 / 60 / 60);
+
+    if (diff < 60 ) {
+        diff_s = `${diff} sec${diff > 1 ? 's': ''}`;
+    } else if (diff < 60 * 60) {
+        let rem = diff - mins * 60;
+        diff_s = `${mins} min${mins > 1? 's': ''} and ${rem} sec${rem > 1? 's': 's'}`;
+    } else {
+        let rem = parseInt((diff  - hours * 60 * 60) / 60);
+        diff_s = `${hours} hour${hours > 1? 's': ''} and ${rem} min${rem > 1? 's': 's'}`;
+    }
+
+    return diff_s;
+}
+
 /* Controllers */
 import { Controller } from "https://unpkg.com/@hotwired/stimulus@3.0.0/dist/stimulus.js";
 
@@ -747,10 +771,20 @@ export class HistoryController extends Controller {
 
         $control.dataset.historyelmIdValue = element.id;
         $control.dataset.historyelmTaskValue = element.task !== null ? element.task.id : -1;
+        $control.dataset.historyelmStartValue = element.start;
+        $control.dataset.historyelmEndValue = element.end;
 
         $history.querySelector('.t-id').innerText = element.id;
-        $history.querySelector('.t-start').innerText = element.start;
-        $history.querySelector('.t-end').innerText = element.end;
+
+        let $start = $history.querySelector('.t-start');
+        let st = new Date(element.start);
+        $start.innerText = `${st.toLocaleString()}`;
+
+        let $dur = $history.querySelector('.t-dur');
+        $dur.innerText = formatDuration(element.start, element.end);
+        $dur.title = `${element.start} → ${element.end}`;
+        new bootstrap.Tooltip($dur);
+
         $history.querySelector('.t-facet').innerText = element.original_facet;
 
         if(element.task !== null)

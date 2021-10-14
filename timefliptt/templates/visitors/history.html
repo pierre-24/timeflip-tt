@@ -9,11 +9,11 @@
     <template id="tp-history">
     <tr data-controller="historyelm">
         <td class="t-id"></td>
-        <td class="t-start"></td>
-        <td class="t-end"></td>
+        <td class="t-start" data-historyelm-target="start"></td>
+        <td class="t-dur" data-bs-toggle="tooltip" data-bs-placement="bottom" title="" data-historyelm-target="duration"></td>
         <td class="t-facet"></td>
-        <td class="t-task"></td>
-        <td class="t-comment"></td>
+        <td class="t-task" data-historyelm-target="task"></td>
+        <td class="t-comment" data-historyelm-target="comment"></td>
         <td>
             <div class="btn-group btn-group-sm">
                 <button type="button" class="btn btn-primary" data-action="historyelm#edit"><i class="bi bi-pen"></i></button>
@@ -38,7 +38,7 @@
                 <tr>
                     <th scope="col">#</th>
                     <th scope="col">Start</th>
-                    <th scope="col">End</th>
+                    <th scope="col">Duration</th>
                     <th scope="col">Facet</th>
                     <th scope="col">Task</th>
                     <th scope="col">Comment</th>
