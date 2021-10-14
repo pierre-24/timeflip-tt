@@ -10,14 +10,36 @@
     <tr data-controller="historyelm">
         <td class="t-id"></td>
         <td class="t-start" data-historyelm-target="start"></td>
+        <td data-historyelm-target="modifyStart" hidden>
+            <div class="input-group input-group-sm">
+                <input type="date" class="form-control" data-historyelm-target="inputStartDate">
+                <input type="time" class="form-control" data-historyelm-target="inputStartTime">
+            </div>
+        </td>
         <td class="t-dur" data-bs-toggle="tooltip" data-bs-placement="bottom" title="" data-historyelm-target="duration"></td>
+        <td data-historyelm-target="modifyEnd" hidden>
+            <div class="input-group input-group-sm">
+                <input type="date" class="form-control" data-historyelm-target="inputEndDate">
+                <input type="time" class="form-control" data-historyelm-target="inputEndTime">
+            </div>
+        </td>
         <td class="t-facet"></td>
         <td class="t-task" data-historyelm-target="task"></td>
+        <td data-historyelm-target="modifyTask" hidden>
+            <select data-historyelm-target="inputTask" class="form-control"></select>
+        </td>
         <td class="t-comment" data-historyelm-target="comment"></td>
+        <td data-historyelm-target="modifyComment" hidden>
+            <input type="text" data-historyelm-target="inputComment" class="form-control">
+        </td>
         <td>
-            <div class="btn-group btn-group-sm">
+            <div class="btn-group btn-group-sm" data-historyelm-target="btn">
                 <button type="button" class="btn btn-primary" data-action="historyelm#edit"><i class="bi bi-pen"></i></button>
                 <button type="button" class="btn btn-danger" data-action="historyelm#destroy"><i class="bi bi-x"></i></button>
+            </div>
+            <div class="btn-group btn-group-sm" data-historyelm-target="modifyBtn" hidden>
+                <button type="button" class="btn btn-primary" data-action="historyelm#cancel"><i class="bi bi-x"></i></button>
+                <button type="button" class="btn btn-primary" data-action="historyelm#update"><i class="bi bi-check"></i></button>
             </div>
         </td>
     </tr>
@@ -63,8 +85,10 @@
     <script type="module">
     import {
         HistoryController,
+        HistoryElmController
     } from "{{ url_for('static', filename='controllers.js') }}";
 
     Stimulus.register("history", HistoryController);
+    Stimulus.register("historyelm", HistoryElmController);
     </script>
 {% endblock %}

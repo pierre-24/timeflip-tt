@@ -808,3 +808,155 @@ export class HistoryController extends Controller {
         this.showPage(Number(this.pageTarget.value), this.sizeTarget.value);
     }
 }
+
+function asUTC(date) {
+    date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+    return date;
+}
+
+function fromUTC(date) {
+    date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+    return date;
+}
+
+function fromHTMLDateTime(date, time) {
+    let datetime = fromUTC(date.valueAsDate);
+    time = fromUTC(time.valueAsDate);
+    datetime.setHours(time.getHours());
+    datetime.setMinutes(time.getMinutes());
+    datetime.setSeconds(time.getSeconds());
+    return asUTC(datetime).toISOString().slice(0, -1);
+}
+
+function toHTMLDateTime(datetime_str, date, time)  {
+    datetime_str = asUTC(new Date(datetime_str));
+    date.valueAsDate = datetime_str;
+    time.valueAsDate = datetime_str;
+}
+
+export class HistoryElmController extends Controller {
+    static get values() { return {id: Number, task: Number, start: String, end: String}; }
+    static get targets() { return [
+        "task", "inputTask", "modifyTask",
+        "start", "inputStartDate", "inputStartTime", "modifyStart",
+        "duration", "inputEndDate", "inputEndTime", "modifyEnd",
+        "comment", "inputComment", "modifyComment",
+        "btn", "modifyBtn"
+    ]; }
+
+    destroy() {
+        /*let $element = this.element;
+        showModal(
+            "Delete correspondence",
+            `Do you really want to delete correspondence to "${this.taskTarget.innerText}"?`,
+            "Delete correspondence",
+            (modal, event) => {
+                apiCall(`timeflips/${this.deviceValue}/facets/${this.facetValue}/`, 'delete').then(
+                    () => {
+                        $element.parentNode.removeChild($element);
+                        modal.hide();
+                    }
+                ).catch((error) => {
+                    showToast(error.message);
+                });
+            });*/
+    }
+
+    edit() {
+        apiCall(`tasks/`)
+            .then((data) => {
+                // task
+                this.inputTaskTarget.innerHTML = ""; // remove previous
+                let $opt = document.createElement("option");
+                $opt.value = '-1';
+                $opt.innerText = '** No task';
+                this.inputTaskTarget.append($opt);
+
+                data.tasks.forEach((task) => {
+                    $opt = document.createElement("option");
+                    $opt.value = task.id;
+                    $opt.innerText = task.name;
+                    this.inputTaskTarget.append($opt);
+                });
+
+                this.inputTaskTarget.value = this.taskValue;
+
+                // start&end
+                toHTMLDateTime(this.startValue, this.inputStartDateTarget, this.inputStartTimeTarget);
+                toHTMLDateTime(this.endValue, this.inputEndDateTarget, this.inputEndTimeTarget);
+
+                // comment
+                this.inputCommentTarget.value = this.commentTarget.innerText;
+
+                this.startEdit();
+
+            });
+    }
+
+    cancel() {
+        this.stopEdit();
+    }
+
+    update() {
+        apiCall(
+            `history/${this.idValue}/`,
+            'patch',
+            {
+                task: this.inputTaskTarget.value,
+                start: fromHTMLDateTime(this.inputStartDateTarget, this.inputStartTimeTarget),
+                end: fromHTMLDateTime(this.inputEndDateTarget, this.inputEndTimeTarget),
+                comment: this.inputCommentTarget.value
+            }).then((element) => {
+                if (element.task !== null) {
+                    this.taskTarget.innerText = element.task.name;
+                    this.taskValue = element.task.id;
+                } else {
+                    this.taskValue = -1;
+                    this.taskTarget.innerText = "";
+                }
+
+                let st = new Date(element.start);
+                this.startTarget.innerText = `${st.toLocaleString()}`;
+
+                this.durationTarget.innerText = formatDuration(element.start, element.end);
+                this.durationTarget.title = `${element.start} → ${element.end}`;
+
+                if(element.comment !== null)
+                    this.commentTarget.innerText = element.comment;
+
+                this.stopEdit();
+            });
+    }
+
+    startEdit() {
+        this.startTarget.hidden = true;
+        this.modifyStartTarget.hidden = false;
+        this.durationTarget.hidden = true;
+        this.modifyEndTarget.hidden = false;
+
+        this.taskTarget.hidden = true;
+        this.modifyTaskTarget.hidden = false;
+
+        this.commentTarget.hidden = true;
+        this.modifyCommentTarget.hidden = false;
+
+        this.btnTarget.hidden = true;
+        this.modifyBtnTarget.hidden = false;
+    }
+
+    stopEdit() {
+        this.startTarget.hidden = false;
+        this.modifyStartTarget.hidden = true;
+        this.durationTarget.hidden = false;
+        this.modifyEndTarget.hidden = true;
+
+        this.taskTarget.hidden = false;
+        this.modifyTaskTarget.hidden = true;
+
+        this.commentTarget.hidden = false;
+        this.modifyCommentTarget.hidden = true;
+
+        this.btnTarget.hidden = false;
+        this.modifyBtnTarget.hidden = true;
+    }
+}

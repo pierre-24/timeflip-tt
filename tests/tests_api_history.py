@@ -72,6 +72,8 @@ class HistoryTestCase(FlaskTestCase):
 
         self.task = Task.create('x', self.category, '#000000')
         self.db_session.add(self.task)
+        self.other_task = Task.create('y', self.category, '#000000')
+        self.db_session.add(self.other_task)
 
         num_elements = 10
         start = datetime.now() - timedelta(seconds=num_elements)
@@ -175,7 +177,7 @@ class HistoryTestCase(FlaskTestCase):
         element = self.elements[0]
 
         comment = 'whatever'
-        task = self.task
+        task = self.other_task
 
         start = datetime.now() - timedelta(seconds=100)
         end = start + timedelta(seconds=1)
@@ -199,6 +201,18 @@ class HistoryTestCase(FlaskTestCase):
         self.assertEqual(task.id, e.task_id)
         self.assertEqual(start, e.start)
         self.assertEqual(end, e.end)
+
+    def test_modify_history_element_negative_remove_task_ok(self):
+        self.assertEqual(self.num_elements, HistoryElement.query.count())
+        element = self.elements[0]
+
+        response = self.client.patch(flask.url_for('api.history-el', id=element.id), json={
+            'task': -1
+        })
+        self.assertEqual(response.status_code, 200)
+
+        e = HistoryElement.query.get(element.id)
+        self.assertIsNone(e.task_id)
 
     def test_modify_unknown_history_element_ko(self):
         self.assertEqual(self.num_elements, HistoryElement.query.count())

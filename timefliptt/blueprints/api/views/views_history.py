@@ -132,7 +132,7 @@ class HistoryElementView(MethodView):
             flask.abort(404, description='Unknown element with id={}'.format(id))
 
     class ModifyHistorySchema(Schema):
-        task = fields.Integer(validate=validate.Range(min=0))
+        task = fields.Integer()
         comment = fields.Str()
         start = fields.DateTime()
         end = fields.DateTime()
@@ -142,11 +142,15 @@ class HistoryElementView(MethodView):
     def patch(self, element: HistoryElement, id: int, **kwargs) -> Response:
         if element is not None:
             if 'task' in kwargs:
-                task = Task.query.get(kwargs.get('task'))
-                if task is None:
-                    flask.abort(404, description='Unknown task with id={}'.format(kwargs.get('task')))
+                task_id = kwargs.get('task')
+                if task_id >= 0:
+                    task = Task.query.get(kwargs.get('task'))
+                    if task is None:
+                        flask.abort(404, description='Unknown task with id={}'.format(kwargs.get('task')))
 
-                element.task_id = task.id
+                    element.task_id = task.id
+                else:
+                    element.task_id = None
 
             els = ['comment', 'start', 'end']
             for el in els:
