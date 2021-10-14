@@ -733,7 +733,7 @@ export class FacetToTaskController extends Controller {
 }
 
 export class HistoryController extends Controller {
-    static get targets() { return ["tbody", "previous", "next", "size", "page"]; }
+    static get targets() { return ["tbody", "previous", "next", "size", "page", "inputBulkTask"]; }
 
     connect() {
         this.refresh();
@@ -785,7 +785,7 @@ export class HistoryController extends Controller {
         $control.dataset.historyelmStartValue = element.start;
         $control.dataset.historyelmEndValue = element.end;
 
-        $history.querySelector('.t-id').innerText = element.id;
+        $history.querySelector('.t-checkbox').checked = false;
 
         let $start = $history.querySelector('.t-start');
         let st = new Date(element.start);
@@ -817,6 +817,73 @@ export class HistoryController extends Controller {
 
     refresh() {
         this.showPage(Number(this.pageTarget.value), this.sizeTarget.value);
+    }
+
+    toogleAll(event) {
+        document.querySelectorAll('.t-checkbox').forEach((checkbox) => {
+            checkbox.checked = event.target.checked;
+        });
+    }
+
+    checked() {
+        let checked = [];
+        document.querySelectorAll('.t-checkbox').forEach((checkbox) => {
+            if (checkbox.checked === true)
+                checked.push(Number(checkbox.parentElement.parentElement.dataset.historyelmIdValue));
+        });
+
+        return checked;
+    }
+
+    modifyTaskChecked() {
+        let checked = this.checked();
+
+        if (checked.length == 0) {
+            showToast('Select elements for bulk modify');
+        } else {
+            apiCall(`tasks/`)
+            .then((data) => {
+                this.inputBulkTaskTarget.innerHTML = ""; // remove previous
+                let $opt = document.createElement("option");
+                $opt.value = '-1';
+                $opt.innerText = '** No task';
+                this.inputBulkTaskTarget.append($opt);
+
+                data.tasks.forEach((task) => {
+                    $opt = document.createElement("option");
+                    $opt.value = task.id;
+                    $opt.innerText = task.name;
+                    this.inputBulkTaskTarget.append($opt);
+                });
+
+                let $modal = document.getElementById('bulkEditModal');
+                let modal = new bootstrap.Modal($modal);
+
+                let $action = $modal.querySelector('.action');
+                let $cloned = $action.cloneNode(true);
+
+                $cloned.addEventListener('click', () => {
+                   apiCall(`history/?id=${checked.join('&id=')}`, 'patch', {task: this.inputBulkTaskTarget.value})
+                       .then((data) => {
+                           this.refresh();
+                           modal.hide();
+                           showToast(`Updated ${checked.length} element${checked.length>1? 's': ''}`, 'bg-info');
+                       }).catch((error) => {
+                           showModalMessage($modal, error.message);
+                       });
+                });
+                $action.parentNode.replaceChild($cloned, $action);
+
+                modal.show();
+
+            }).catch((error) => {
+                showToast(error.message);
+            });
+        }
+    }
+
+    destroyChecked() {
+
     }
 }
 

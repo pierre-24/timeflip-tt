@@ -202,14 +202,17 @@ class HistoryTestCase(FlaskTestCase):
         self.assertEqual(start, e.start)
         self.assertEqual(end, e.end)
 
-    def test_modify_history_element_negative_remove_task_ok(self):
+    def test_modify_history_element_negative_task_ok(self):
         self.assertEqual(self.num_elements, HistoryElement.query.count())
         element = self.elements[0]
 
         response = self.client.patch(flask.url_for('api.history-el', id=element.id), json={
-            'task': -1
+            'task': -1  # negative id remove task
         })
         self.assertEqual(response.status_code, 200)
+
+        data = response.get_json()
+        self.assertIsNone(data['task'])
 
         e = HistoryElement.query.get(element.id)
         self.assertIsNone(e.task_id)
@@ -272,7 +275,7 @@ class HistoryTestCase(FlaskTestCase):
         elements = self.elements[0:2]
 
         comment = 'whatever'
-        task = self.task
+        task = self.other_task
 
         response = self.client.patch(
             flask.url_for('api.history-els') + '?' + '&'.join('id={}'.format(e.id) for e in elements), json={
@@ -290,6 +293,24 @@ class HistoryTestCase(FlaskTestCase):
             e = HistoryElement.query.get(element.id)
             self.assertEqual(comment, e.comment)
             self.assertEqual(task.id, e.task_id)
+
+    def test_modify_history_elements_negative_task_batch_ok(self):
+        self.assertEqual(self.num_elements, HistoryElement.query.count())
+        elements = self.elements[0:2]
+
+        response = self.client.patch(
+            flask.url_for('api.history-els') + '?' + '&'.join('id={}'.format(e.id) for e in elements), json={
+                'task': -1  # negative id remove task
+            })
+        self.assertEqual(response.status_code, 200)
+
+        data = response.get_json()
+        for element in data:
+            self.assertIsNone(element['task'])
+
+        for element in elements:
+            e = HistoryElement.query.get(element.id)
+            self.assertIsNone(e.task_id)
 
     def test_modify_unknown_history_elements_batch_ko(self):
         self.assertEqual(self.num_elements, HistoryElement.query.count())

@@ -8,7 +8,7 @@
 
     <template id="tp-history">
     <tr data-controller="historyelm">
-        <td class="t-id"></td>
+        <td><input type="checkbox" class="t-checkbox"></td>
         <td class="t-start" data-historyelm-target="start"></td>
         <td data-historyelm-target="modifyStart" hidden>
             <div class="input-group input-group-sm">
@@ -16,7 +16,7 @@
                 <input type="time" class="form-control" data-historyelm-target="inputStartTime">
             </div>
         </td>
-        <td class="t-dur" data-bs-toggle="tooltip" data-bs-placement="bottom" title="" data-historyelm-target="duration"></td>
+        <td class="t-dur" data-bs-toggle="tooltip" data-bs-placement="left" title="" data-historyelm-target="duration"></td>
         <td data-historyelm-target="modifyEnd" hidden>
             <div class="input-group input-group-sm">
                 <input type="date" class="form-control" data-historyelm-target="inputEndDate">
@@ -26,11 +26,11 @@
         <td class="t-facet"></td>
         <td class="t-task" data-historyelm-target="task"></td>
         <td data-historyelm-target="modifyTask" hidden>
-            <select data-historyelm-target="inputTask" class="form-control"></select>
+            <select data-historyelm-target="inputTask" class="form-control form-control-sm"></select>
         </td>
         <td class="t-comment" data-historyelm-target="comment"></td>
         <td data-historyelm-target="modifyComment" hidden>
-            <input type="text" data-historyelm-target="inputComment" class="form-control">
+            <input type="text" data-historyelm-target="inputComment" class="form-control form-control-sm">
         </td>
         <td>
             <div class="btn-group btn-group-sm" data-historyelm-target="btn">
@@ -46,19 +46,39 @@
     </template>
 
     <div data-controller="history">
-        <p class="input-group input-group-sm" style="max-width: 200px">
-            <span class="input-group-text">Page size</span>
-            <select data-history-target="size" class="form-control" data-action="history#refresh">
-                <option value="10" selected>10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
+
+        <div id="bulkEditModal" class="modal fade" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Bulk modify task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                  <select data-history-target="inputBulkTask" id="bulkTask" name="bulkTask" class="form-control"></select>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary action">Submit</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p class="btn-group btn-group">
+            <select data-history-target="size" data-action="history#refresh">
+                <option value="10" selected>10 per page</option>
+                <option value="25">25 per page</option>
+                <option value="50">50 per page</option>
+                <option value="100">100 per page</option>
             </select>
+            <button class="btn btn-outline-primary" data-action="history#modifyTaskChecked"><i class="bi bi-hammer"></i> Bulk modify task</button>
+            <button class="btn btn-outline-primary" data-action="history#destroyChecked"><i class="bi bi-x"></i> Bulk delete</button>
         </p>
         <table class="table">
             <thead>
                 <tr>
-                    <th scope="col">#</th>
+                    <th scope="col"><input type="checkbox" data-action="history#toogleAll"></th>
                     <th scope="col">Start</th>
                     <th scope="col">Duration</th>
                     <th scope="col">Facet</th>

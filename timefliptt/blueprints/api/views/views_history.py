@@ -74,21 +74,28 @@ class HistoryElementsView(MethodView):
             return HistoryElement.query.filter(HistoryElement.id.in_(data['id'])).all()
 
     class ModifyHistorySchema(Schema):
-        task = fields.Integer(validate=validate.Range(min=0))
+        task = fields.Integer()
         comment = fields.Str()
 
     @parser.use_args(SimpleHistoryElementsSchema, location='query')
     @parser.use_kwargs(ModifyHistorySchema, location='json')
     def patch(self, elements: List[HistoryElement], **kwargs) -> Response:
+        print(kwargs)
         if len(elements) > 0:
             if 'task' in kwargs:
-                task = Task.query.get(kwargs.get('task'))
-                if task is None:
-                    flask.abort(404, description='Unknown task with id={}'.format(kwargs.get('task')))
+                task_id = kwargs.get('task')
+                if task_id >= 0:
+                    task = Task.query.get(task_id)
+                    if task is None:
+                        flask.abort(404, description='Unknown task with id={}'.format(kwargs.get('task')))
 
-                for element in elements:
-                    element.task_id = task.id
-                    db.session.add(element)
+                    for element in elements:
+                        element.task_id = task.id
+                        db.session.add(element)
+                else:
+                    for element in elements:
+                        element.task_id = None
+                        db.session.add(element)
 
             if 'comment' in kwargs:
                 for element in elements:
