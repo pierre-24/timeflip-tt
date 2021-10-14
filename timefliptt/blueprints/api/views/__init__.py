@@ -21,6 +21,7 @@ def handle_error(err):
         return flask.jsonify(data), err.code
 
 
+@blueprint.errorhandler(401)
 @blueprint.errorhandler(403)
 @blueprint.errorhandler(404)
 @blueprint.errorhandler(409)

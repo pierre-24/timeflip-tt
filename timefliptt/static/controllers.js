@@ -80,12 +80,22 @@ function showModal(title, message, button, action) {
     $newAction.innerHTML = button;
     $action.parentNode.replaceChild($newAction, $action);
 
-    $newAction.addEventListener(
-        'click',
-        (event) => {action(modal, event); },
-        {once: true});
+    $newAction.addEventListener('click',(event) => {action(modal, event); });
 
     modal.show();
+}
+
+function showModalMessage($modal, message, scheme="alert-danger") {
+     let $msg = $modal.querySelector('.modal-body');
+
+     let $div = document.getElementById('tp-modalmessage').content.cloneNode(true);
+     $div.querySelector('.placeholder').innerHTML = message;
+
+     scheme.split(" ").forEach((cl) => {
+        $div.querySelector('.alert').classList.add(cl);
+    });
+
+     $msg.insertBefore($div, $msg.firstChild);
 }
 
 function apiCall(address, method='get', body= null) {
@@ -227,16 +237,14 @@ export class TFConnectController extends Controller {
 }
 
 function deal_with_tf_info_error_422(metadata) {
-    metadata.json().then((data) => {
-
+    return metadata.json().then((data) => {
        let errors = [];
        ['address', 'name', 'password'].forEach((field) => {
            if (field in data.errors.json) {
                errors.push(`${field} (${data.errors.json[field][0]})`);
            }
        });
-
-       showToast(`Please correct field${ errors.length > 1 ? 's' : ''}: ${errors.join(', ')}`);
+       return `Please correct field${ errors.length > 1 ? 's' : ''}: ${errors.join(', ')}`;
     });
 }
 
@@ -288,7 +296,7 @@ export class TFAddController extends Controller {
                     showToast("Device successfully added!", "bg-primary");
                 }).catch((err) => { // be more explicit!
                     if (err.metadata.status === 422) {
-                        deal_with_tf_info_error_422(err.metadata);
+                        deal_with_tf_info_error_422(err.metadata).then((msg) => showToast(msg));
                     } else {
                         showToast(err.message);
                     }
@@ -573,31 +581,34 @@ export class TimeflipInfoController extends Controller {
     editInfo() {
         apiCall(`timeflips/${this.idValue}/handle`)
             .then((data) => {
+                let $modal = document.querySelector('#timeflipInfoModal');
+                let modal = new bootstrap.Modal($modal);
                 this.inputNameTarget.value = data.name;
                 this.inputPasswordTarget.value = data.password;
 
-                new bootstrap.Modal(document.querySelector('#timeflipInfoModal')).show();
-            }).catch((error) => {
-                if (error.metadata.status === 401)  {
-                    showToast('Please connect to TimeFlip first');
-                } else {
-                    showToast(error.message);
-                }
-            });
-    }
+                $modal.querySelector('.action').addEventListener('click', () => {
+                    apiCall(
+                        `timeflips/${this.idValue}/handle`,
+                        'put',
+                        {name: this.inputNameTarget.value, password: this.inputPasswordTarget.value}
+                        ).then((data) => {
+                            modal.hide();
+                            showToast('Info were updated', 'bg-info');
+                        }).catch((error) => {
+                            if (error.metadata.status === 401)  {
+                                showToast('Please connect to TimeFlip first');
+                            } else if (error.metadata.status === 422) {
+                                deal_with_tf_info_error_422(error.metadata).then((msg) => showModalMessage($modal, msg));
+                            } else {
+                                showToast(error.message);
+                            }
+                        });
+                });
 
-    submitInfo() {
-        apiCall(
-            `timeflips/${this.idValue}/handle`,
-            'put',
-            {name: this.inputNameTarget.value, password: this.inputPasswordTarget.value}
-            ).then((data) => {
-                showToast('Info were updated', 'bg-info');
+                modal.show();
             }).catch((error) => {
                 if (error.metadata.status === 401)  {
                     showToast('Please connect to TimeFlip first');
-                } else if (error.metadata.status === 422) {
-                    deal_with_tf_info_error_422(error.metadata);
                 } else {
                     showToast(error.message);
                 }
@@ -615,11 +626,11 @@ export class TimeflipInfoController extends Controller {
                     apiCall(
                         `timeflips/${this.idValue}/handle`, 'put', {change_calibration: true}
                         ).then((data) => {
+                            modal.hide();
                             showToast(`Calibration was changed to <code class="text-white">${data.calibration}</code>.`, "bg-info");
                         }).catch((error) => {
-                            showToast(error.message);
+                            showModalMessage(modal._element, error.message);
                         });
-                    modal.hide();
                 });
             }).catch((error) => {
                 if (error.metadata.status === 401)  {
@@ -640,16 +651,16 @@ export class TimeflipInfoController extends Controller {
                 `timeflips/${this.idValue}/history`, 'post'
                 ).then((data) => {
                     showToast(`Fetched ${data.history_elements.length} history elements!`, "bg-info");
+                    modal.hide();
                 }).catch((error) => {
                     if (error.metadata.status === 401)  {
-                        showToast('Please connect to TimeFlip first');
+                        showModalMessage(modal._element, 'Please connect to TimeFlip first');
                     } else if (error.metadata.status === 409)  {
-                        error.metadata.json().then(data => showToast(data.message));
+                        error.metadata.json().then(data => showModalMessage(modal._element, data.message));
                     } else {
-                        showToast(error.message);
+                        showModalMessage(modal._element, error.message);
                     }
                 });
-            modal.hide();
         });
     }
 }
