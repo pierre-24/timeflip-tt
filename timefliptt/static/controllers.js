@@ -196,6 +196,7 @@ export class TFConnectController extends Controller {
     }
 
     listTF() {
+        this.viewTarget.hidden = true;
         apiCall('/timeflips')
             .then((data) => {
                 if ("timeflip_devices" in data && data.timeflip_devices.length > 0) {
