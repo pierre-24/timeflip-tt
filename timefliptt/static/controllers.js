@@ -445,9 +445,9 @@ export class CategoryController extends Controller {
                         $element.parentNode.removeChild($element);
                         modal.hide();
                     }
-                );
-            }).catch((error) => {
-                showToast(error.message);
+                ).catch((error) => {
+                    showToast(error.message);
+                });
             });
     }
 
@@ -865,6 +865,11 @@ export class HistoryController extends Controller {
         } else {
             this.showPage(Number(this.pageTarget.value) + shift, this.sizeTarget.value);
         }
+    }
+
+    repaginate() {
+        this.pageTarget.value = 0;
+        this.refresh();
     }
 
     refresh() {
