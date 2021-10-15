@@ -373,7 +373,7 @@ export class GraphsController extends  Controller {
             sub_period = 3600;
             get_label = (date) => {
                 let d = new Date(date);
-                return `${(d.getDate() + 1)}/${d.getMonth() + 1}`;
+                return `${(d.getDate())}/${d.getMonth() + 1}`;
             };
         }
 
