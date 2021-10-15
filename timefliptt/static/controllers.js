@@ -158,6 +158,8 @@ function formatDurationS(diff) {
 /* Controllers */
 import { Controller } from "https://unpkg.com/@hotwired/stimulus@3.0.0/dist/stimulus.js";
 
+let updateInterval = null;
+
 export class TFConnectController extends Controller {
     static get targets() { return ["timeflips", "view", "inputTF", "connect", "name", "address", "battery", "facet", "link"]; }
     static get values() { return {id: Number}; }
@@ -168,12 +170,29 @@ export class TFConnectController extends Controller {
                 if (data.daemon_status === "connected") {
                     this.idValue = data.timeflip_device.id;
                     this.status();
+                    this.viewTarget.hidden = false;
+                    this.setInterval();
                 } else {
                     this.listTF();
                 }
             }).catch((error) => {
                 showToast(error.message);
             });
+    }
+
+    setInterval() {
+        clearInterval();
+        updateInterval = window.setInterval(
+            () => { this.status(); },
+            15 * 1000
+        );
+    }
+
+    clearInterval() {
+        if (updateInterval != null) {
+            window.clearInterval(updateInterval);
+            updateInterval = null;
+        }
     }
 
     listTF() {
@@ -217,6 +236,7 @@ export class TFConnectController extends Controller {
                 this.update_status(data);
                 this.timeflipsTarget.hidden = true;
                 this.viewTarget.hidden = false;
+                this.setInterval();
             }).catch((error) => {
                 showToast(error.message);
             });
@@ -226,8 +246,9 @@ export class TFConnectController extends Controller {
         apiCall(`timeflips/${this.idValue}/handle`)
             .then((data) => {
                 this.update_status(data);
-                this.viewTarget.hidden = false;
             }).catch((error) => {
+                this.listTF();
+                this.clearInterval();
                 showToast(error.message);
             });
     }
@@ -244,6 +265,7 @@ export class TFConnectController extends Controller {
         this.viewTarget.hidden = true;
         apiCall('timeflips/daemon', 'delete').then(() => {
             this.listTF();
+            this.clearInterval();
         });
     }
 }
