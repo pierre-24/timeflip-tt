@@ -706,6 +706,7 @@ export class TimeflipInfoController extends Controller {
         $main.classList.add(`ftt-facet-${ftt.facet}`);
 
         $ftt.querySelector('.t-facet').innerText = ftt.facet;
+        $ftt.querySelector('.task-color').style.background = ftt.task.color;
         $ftt.querySelector('.t-task').innerHTML = ftt.task.name;
 
         this.tbodyTarget.append($ftt);
@@ -817,7 +818,7 @@ export class TimeflipInfoController extends Controller {
 
 export class FacetToTaskController extends Controller {
     static get values() { return {facet: Number, task: Number, device: Number}; }
-    static get targets() { return ["task", "inputTask", "modify"]; }
+    static get targets() { return ["task", "taskColor", "inputTask", "modify", "view"]; }
 
     destroy() {
         let $element = this.element;
@@ -869,6 +870,7 @@ export class FacetToTaskController extends Controller {
             ).then((ftt) => {
                 this.taskTarget.innerText = ftt.task.name;
                 this.taskValue = ftt.task.id;
+                this.taskColorTarget.style.background = ftt.task.color;
 
                 this.stopEdit();
             });
@@ -876,12 +878,12 @@ export class FacetToTaskController extends Controller {
 
     startEdit() {
         this.modifyTarget.hidden = false;
-        this.taskTarget.hidden = true;
+        this.viewTarget.hidden = true;
     }
 
     stopEdit() {
         this.modifyTarget.hidden = true;
-        this.taskTarget.hidden = false;
+        this.viewTarget.hidden = false;
     }
 }
 
@@ -951,8 +953,12 @@ export class HistoryController extends Controller {
 
         $history.querySelector('.t-facet').innerText = element.original_facet;
 
-        if(element.task !== null)
+        if(element.task !== null) {
             $history.querySelector('.t-task').innerText = element.task.name;
+            $history.querySelector('.task-color').style.background = element.task.color;
+        } else {
+            $history.querySelector('.task-color').hidden = true;
+        }
 
         if(element.comment !== null)
             $history.querySelector('.t-comment').innerText = element.comment;
@@ -1125,7 +1131,7 @@ function toHTMLDateTime(datetime_str, date, time)  {
 export class HistoryElmController extends Controller {
     static get values() { return {id: Number, task: Number, start: String, end: String}; }
     static get targets() { return [
-        "task", "inputTask", "modifyTask",
+        "task", "inputTask", "modifyTask", "taskName", "taskColor",
         "start", "inputStartDate", "inputStartTime", "modifyStart",
         "duration", "inputEndDate", "inputEndTime", "modifyEnd",
         "comment", "inputComment", "modifyComment",
@@ -1200,11 +1206,14 @@ export class HistoryElmController extends Controller {
                 comment: this.inputCommentTarget.value
             }).then((element) => {
                 if (element.task !== null) {
-                    this.taskTarget.innerText = element.task.name;
+                    this.taskNameTarget.innerText = element.task.name;
+                    this.taskColorTarget.hidden = false;
+                    this.taskColorTarget.style.background = element.task.color;
                     this.taskValue = element.task.id;
                 } else {
                     this.taskValue = -1;
-                    this.taskTarget.innerText = "";
+                    this.taskNameTarget.innerText = "";
+                    this.taskColorTarget.hidden = true;
                 }
 
                 let st = new Date(element.start);

@@ -23,7 +23,7 @@ footer  {
     display: inline-block;
 }
 
-#categories .task-color {
+.task-color {
     display: inline-block;
     width: 1rem;
     height: 1rem;

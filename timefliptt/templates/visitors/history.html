@@ -24,7 +24,10 @@
             </div>
         </td>
         <td class="t-facet"></td>
-        <td class="t-task" data-historyelm-target="task"></td>
+        <td data-historyelm-target="task">
+            <span class="task-color" data-historyelm-target="taskColor"></span>
+            <span class="t-task" data-historyelm-target="taskName"></span>
+        </td>
         <td data-historyelm-target="modifyTask" hidden>
             <select data-historyelm-target="inputTask" class="form-control form-control-sm"></select>
         </td>
@@ -85,9 +88,9 @@
 
         <p class="btn-group btn-group">
             <select data-history-target="size" data-action="history#repaginate">
-                <option value="10" selected>10 per page</option>
+                <option value="10">10 per page</option>
                 <option value="25">25 per page</option>
-                <option value="50">50 per page</option>
+                <option value="50" selected>50 per page</option>
                 <option value="100">100 per page</option>
             </select>
             <button class="btn btn-outline-primary" data-action="history#modifyTaskChecked"><i class="bi bi-hammer"></i> Task</button>

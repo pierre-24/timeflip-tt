@@ -9,7 +9,10 @@
     <template id="tp-facettotask">
         <tr data-controller="facettotask">
             <td class="t-facet"></td>
-            <td data-facettotask-target="task" class="t-task"></td>
+            <td data-facettotask-target="view">
+                <span class="task-color" data-facettotask-target="taskColor"></span>
+                <span data-facettotask-target="task" class="t-task"></span>
+            </td>
             <td data-facettotask-target="modify" hidden>
                 <div class="input-group input-group-sm">
                     <select data-facettotask-target="inputTask" class="form-control"></select>
