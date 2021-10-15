@@ -13,8 +13,10 @@
                 <option value="30;86400">Last 30 days</option>
             </select>
         </p>
+        <p class="mb-3" data-graphs-target="total"></p>
         <div data-graphs-target="cumulative" class="d-flex flex-row graph-cumulative"></div>
-        <div data-graphs-target="perPeriod"></div>
+        <div data-graphs-target="perPeriod" style="width: 100%;" class="mt-3">
+        </div>
     </div>
 {% endblock %}
 

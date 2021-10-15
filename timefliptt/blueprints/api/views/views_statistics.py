@@ -228,8 +228,8 @@ class BasePeriodicView(BaseStatisticalView, MethodView):
             except ValueError:
                 continue
 
-            period_start = int(math.floor((element.start - start).total_seconds() / period))
-            period_end = int(math.floor((element.end - start).total_seconds() / period))
+            period_start = int(math.floor((max(element.start, start) - start).total_seconds() / period))
+            period_end = int(math.floor((min(element.end, end) - start).total_seconds() / period))
 
             for current_period in range(period_start, period_end + 1):
                 if discriminant not in accumulator[current_period]:

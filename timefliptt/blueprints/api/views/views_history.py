@@ -80,7 +80,6 @@ class HistoryElementsView(MethodView):
     @parser.use_args(SimpleHistoryElementsSchema, location='query')
     @parser.use_kwargs(ModifyHistorySchema, location='json')
     def patch(self, elements: List[HistoryElement], **kwargs) -> Response:
-        print(kwargs)
         if len(elements) > 0:
             if 'task' in kwargs:
                 task_id = kwargs.get('task')

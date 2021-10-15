@@ -317,8 +317,12 @@ export class TFAddController extends Controller {
     }
 }
 
+import { Chart, registerables } from 'https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.esm.js';
+
+Chart.register(...registerables);
+
 export class GraphsController extends  Controller {
-    static get targets() { return ["setup", "cumulative", "perPeriod"]; }
+    static get targets() { return ["setup", "cumulative", "perPeriod", "total"]; }
 
     connect() {
         this.refresh();
@@ -333,9 +337,16 @@ export class GraphsController extends  Controller {
         end.setDate(end.getDate() + 1);
         let start = new Date(end);
         start.setDate(end.getDate() - Number(v[0]));
+        let query = `start_date=${asUTC(start).toISOString().slice(0, 10)}&end_date=${asUTC(end).toISOString().slice(0, 10)}`
 
-        apiCall(`statistics/cumulative/tasks/?start_date=${asUTC(start).toISOString().slice(0, 10)}&end_date=${asUTC(end).toISOString().slice(0, 10)}`)
+        this.makeCumulative(query);
+        this.makePerPeriod(query, Number(v[1]));
+    }
+
+    makeCumulative(query) {
+        apiCall(`statistics/cumulative/tasks/?${query}`)
             .then((data) => {
+                this.totalTarget.innerText = `Total: ${formatDurationS(data.cumulative_time)}`;
                 this.cumulativeTarget.innerHTML = "";
 
                 data.tasks.forEach((task) => {
@@ -352,8 +363,69 @@ export class GraphsController extends  Controller {
             });
     }
 
-    makeCumulative(start, end) {
+    makePerPeriod(query, period) {
+        let sub_period = 60;
+        let get_label = (date) => {
+            let d = new Date(date);
+            return `${(d.getHours())}:00`;
+        };
+        if (period == 24 * 60 * 60) {
+            sub_period = 3600;
+            get_label = (date) => {
+                let d = new Date(date);
+                return `${(d.getDate() + 1)}/${d.getMonth() + 1}`;
+            };
+        }
 
+        apiCall(`statistics/periodic/${period}/tasks/?${query}`)
+            .then((data) => {
+                let labels = [];
+                let datasets = {};
+                let period_id = 0;
+
+                data.periods.forEach((period) => {
+                    labels.push(get_label(period.start));
+
+                    period.tasks.forEach((task) => {
+                        if(!(task.id in datasets)) {
+                            datasets[task.id] = {
+                                label: task.name,
+                                backgroundColor: task.color,
+                                data: Array(data.periods.length).fill(0)
+                            };
+                        }
+
+                        datasets[task.id].data[period_id] = task.cumulative_time / sub_period;
+                    });
+
+                    period_id++;
+                });
+
+                let $canvas = document.createElement('canvas');
+                this.perPeriodTarget.innerHTML = '';
+                this.perPeriodTarget.append($canvas);
+
+                new Chart($canvas, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: Object.values(datasets)
+                    },
+                    options: {
+                        aspectRatio: 2.5,
+                        scales: {
+                          x: {
+                            stacked: true,
+                          },
+                          y: {
+                            stacked: true
+                          }
+                        }
+                    }
+                });
+            }).catch((err) => {
+                showToast(err.message);
+            });
     }
 }
 
