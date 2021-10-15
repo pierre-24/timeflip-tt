@@ -3,7 +3,8 @@
 {% block page_title %}TimeFlip{% endblock %}
 
 {% block content %}
-    <h1>TimeFlip</h1>
+    <h1>Configure TimeFlip</h1>
+    <p class="text-muted">{{ timeflip_device.name }} ({{ timeflip_device.address }})</p>
 
     <template id="tp-facettotask">
         <tr data-controller="facettotask">

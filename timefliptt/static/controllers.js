@@ -659,15 +659,18 @@ export class TimeflipInfoController extends Controller {
     }
 
     createFTT() {
-        apiCall(`tasks/`)
+        apiCall(`categories/`)
             .then((data) => {
                 // list tasks
                 this.inputTaskTarget.innerHTML = ""; // remove previous
-                data.tasks.forEach((task) => {
-                    let $opt = document.createElement("option");
-                    $opt.value = task.id;
-                    $opt.innerText = task.name;
-                    this.inputTaskTarget.append($opt);
+
+                data.categories.forEach((category) => {
+                    category.tasks.forEach((task) => {
+                        let $opt = document.createElement("option");
+                        $opt.value = task.id;
+                        $opt.innerText = `${category.name} > ${task.name}`;
+                        this.inputTaskTarget.append($opt);
+                    });
                 });
 
                 // list facets
@@ -835,14 +838,17 @@ export class FacetToTaskController extends Controller {
     }
 
     edit() {
-        apiCall(`tasks/`)
+        apiCall(`categories/`)
             .then((data) => {
                 this.inputTaskTarget.innerHTML = ""; // remove previous
-                data.tasks.forEach((task) => {
-                    let $opt = document.createElement("option");
-                    $opt.value = task.id;
-                    $opt.innerText = task.name;
-                    this.inputTaskTarget.append($opt);
+
+                data.categories.forEach((category) => {
+                    category.tasks.forEach((task) => {
+                        let $opt = document.createElement("option");
+                        $opt.value = task.id;
+                        $opt.innerText = `${category.name} > ${task.name}`;
+                        this.inputTaskTarget.append($opt);
+                    });
                 });
 
                 this.inputTaskTarget.value = this.taskValue;
@@ -993,7 +999,7 @@ export class HistoryController extends Controller {
         if (checked.length == 0) {
             showToast('Select elements for bulk modify');
         } else {
-            apiCall(`tasks/`)
+            apiCall(`categories/`)
             .then((data) => {
                 this.inputBulkTaskTarget.innerHTML = ""; // remove previous
                 let $opt = document.createElement("option");
@@ -1001,11 +1007,13 @@ export class HistoryController extends Controller {
                 $opt.innerText = '** No task';
                 this.inputBulkTaskTarget.append($opt);
 
-                data.tasks.forEach((task) => {
-                    $opt = document.createElement("option");
-                    $opt.value = task.id;
-                    $opt.innerText = task.name;
-                    this.inputBulkTaskTarget.append($opt);
+                data.categories.forEach((category) => {
+                    category.tasks.forEach((task) => {
+                        $opt = document.createElement("option");
+                        $opt.value = task.id;
+                        $opt.innerText = `${category.name} > ${task.name}`;
+                        this.inputBulkTaskTarget.append($opt);
+                    });
                 });
 
                 let $modal = document.getElementById('bulkEditTaskModal');
@@ -1143,7 +1151,7 @@ export class HistoryElmController extends Controller {
     }
 
     edit() {
-        apiCall(`tasks/`)
+        apiCall(`categories/`)
             .then((data) => {
                 // task
                 this.inputTaskTarget.innerHTML = ""; // remove previous
@@ -1152,11 +1160,13 @@ export class HistoryElmController extends Controller {
                 $opt.innerText = '** No task';
                 this.inputTaskTarget.append($opt);
 
-                data.tasks.forEach((task) => {
-                    $opt = document.createElement("option");
-                    $opt.value = task.id;
-                    $opt.innerText = task.name;
-                    this.inputTaskTarget.append($opt);
+                data.categories.forEach((category) => {
+                    category.tasks.forEach((task) => {
+                        $opt = document.createElement("option");
+                        $opt.value = task.id;
+                        $opt.innerText = `${category.name} > ${task.name}`;
+                        this.inputTaskTarget.append($opt);
+                    });
                 });
 
                 this.inputTaskTarget.value = this.taskValue;
