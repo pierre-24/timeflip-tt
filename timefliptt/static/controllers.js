@@ -924,13 +924,17 @@ export class TimeflipInfoController extends Controller {
 
 export class FacetToTaskController extends Controller {
     static get values() { return {facet: Number, task: Number, device: Number}; }
-    static get targets() { return ["task", "taskColor", "inputTask", "modify", "view"]; }
+    static get targets() { return [
+        "taskName", "taskColor", "inputTask", "modifyTask", "viewTask",
+        "viewBtn", "modifyBtn"
+    ];
+    }
 
     destroy() {
         let $element = this.element;
         showModal(
             "Delete correspondence",
-            `Do you really want to delete correspondence to "${this.taskTarget.innerText}"?`,
+            `Do you really want to delete correspondence to "${this.taskNameTarget.innerText}"?`,
             "Delete correspondence",
             (modal, event) => {
                 apiCall(`timeflips/${this.deviceValue}/facets/${this.facetValue}/`, 'delete').then(
@@ -974,7 +978,7 @@ export class FacetToTaskController extends Controller {
             'put',
             { task: this.inputTaskTarget.value }
             ).then((ftt) => {
-                this.taskTarget.innerText = ftt.task.name;
+                this.taskNameTarget.innerText = ftt.task.name;
                 this.taskValue = ftt.task.id;
                 this.taskColorTarget.style.background = ftt.task.color;
 
@@ -983,13 +987,17 @@ export class FacetToTaskController extends Controller {
     }
 
     startEdit() {
-        this.modifyTarget.hidden = false;
-        this.viewTarget.hidden = true;
+        this.modifyTaskTarget.hidden = false;
+        this.viewTaskTarget.hidden = true;
+        this.modifyBtnTarget.hidden = false;
+        this.viewBtnTarget.hidden = true;
     }
 
     stopEdit() {
-        this.modifyTarget.hidden = true;
-        this.viewTarget.hidden = false;
+        this.modifyTaskTarget.hidden = true;
+        this.viewTaskTarget.hidden = false;
+        this.modifyBtnTarget.hidden = true;
+        this.viewBtnTarget.hidden = false;
     }
 }
 

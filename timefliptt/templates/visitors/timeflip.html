@@ -9,21 +9,21 @@
     <template id="tp-facettotask">
         <tr data-controller="facettotask">
             <td class="t-facet"></td>
-            <td data-facettotask-target="view">
+            <td data-facettotask-target="viewTask">
                 <span class="task-color" data-facettotask-target="taskColor"></span>
-                <span data-facettotask-target="task" class="t-task"></span>
+                <span data-facettotask-target="taskName" class="t-task"></span>
             </td>
-            <td data-facettotask-target="modify" hidden>
-                <div class="input-group input-group-sm">
-                    <select data-facettotask-target="inputTask" class="form-select"></select>
-                    <button type="button" class="btn btn-primary" data-action="facettotask#cancel"><i class="bi bi-x"></i></button>
-                    <button type="button" class="btn btn-primary" data-action="facettotask#update"><i class="bi bi-check"></i></button>
-                </div>
+            <td data-facettotask-target="modifyTask" hidden>
+                <select data-facettotask-target="inputTask" class="form-select"></select>
             </td>
             <td>
-                <div class="btn-group btn-group-sm">
+                <div class="btn-group btn-group-sm" data-facettotask-target="viewBtn">
                     <button type="button" class="btn btn-primary" data-action="facettotask#edit"><i class="bi bi-pen"></i></button>
                     <button type="button" class="btn btn-danger" data-action="facettotask#destroy"><i class="bi bi-x"></i></button>
+                </div>
+                <div class="btn-group btn-group-sm" data-facettotask-target="modifyBtn" hidden>
+                    <button type="button" class="btn btn-primary" data-action="facettotask#cancel"><i class="bi bi-x"></i></button>
+                    <button type="button" class="btn btn-primary" data-action="facettotask#update"><i class="bi bi-check"></i></button>
                 </div>
             </td>
         </tr>
