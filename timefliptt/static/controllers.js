@@ -354,10 +354,31 @@ Date.prototype.resetTime =  function () {
 };
 
 export class GraphsController extends  Controller {
-    static get targets() { return ["inputStartEnd", "inputStartDate", "inputEndDate", "inputPeriod", "cumulative", "perPeriod", "total"]; }
+    static get targets() { return [
+        "inputStartEnd", "inputStartDate", "inputEndDate", "inputPeriod",
+        "inputCategories", "inputTasks",
+        "cumulative", "perPeriod", "total"
+    ]; }
 
     connect() {
         this.changePeriod();
+        apiCall('categories/').then((data) => {
+                data.categories.forEach((category)=> {
+                    let $optcat = document.createElement("option");
+                    $optcat.value = category.id;
+                    $optcat.innerText = category.name;
+                    this.inputCategoriesTarget.append($optcat);
+
+                    category.tasks.forEach((task) => {
+                        let $opttask = document.createElement("option");
+                        $opttask.value = task.id;
+                        $opttask.innerText = `${category.name} > ${task.name}`;
+                        this.inputTasksTarget.append($opttask);
+                    });
+                });
+            }).catch((err) => {
+                showToast(err.message);
+            });
     }
 
     changePeriod() {
@@ -410,7 +431,18 @@ export class GraphsController extends  Controller {
     refresh() {
         let start = fromUTC(this.inputStartDateTarget.valueAsDate);
         let end = fromUTC(this.inputEndDateTarget.valueAsDate);
+
+        let selected_cats = new Array(...this.inputCategoriesTarget.selectedOptions).map(opt => Number(opt.value));
+        let selected_tasks = new Array(...this.inputTasksTarget.selectedOptions).map(opt => Number(opt.value));
+
         let query = `start_date=${asUTC(start).toISOString().slice(0, 10)}&end_date=${asUTC(end).toISOString().slice(0, 10)}`;
+
+        if (selected_cats.length > 0)
+            query += `&category=${selected_cats.join('&category=')}`;
+
+        if (selected_tasks.length > 0)
+            query += `&task=${selected_tasks.join('&task=')}`;
+
         let period = Number(this.inputPeriodTarget.value);
         this.makeCumulative(query);
         this.makePerPeriod(query, period, ONE_HOUR);

@@ -29,7 +29,7 @@
             <span class="t-task" data-historyelm-target="taskName"></span>
         </td>
         <td data-historyelm-target="modifyTask" hidden>
-            <select data-historyelm-target="inputTask" class="form-control form-control-sm"></select>
+            <select data-historyelm-target="inputTask" class="form-select form-control-sm"></select>
         </td>
         <td class="t-comment" data-historyelm-target="comment"></td>
         <td data-historyelm-target="modifyComment" hidden>
@@ -58,7 +58,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div class="modal-body">
-                  <select data-history-target="inputBulkTask" id="bulkTask" name="bulkTask" class="form-control"></select>
+                  <select data-history-target="inputBulkTask" id="bulkTask" name="bulkTask" class="form-select"></select>
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -113,7 +113,7 @@
         </table>
         <ul class="pagination" data-history-target="pagination">
             <li class="page-item disabled" data-history-target="previous"><a class="page-link" href="#" data-action="history#paginate" data-history-shift-param="-1">Previous</a></li>
-            <select class="form-control" style="width: 5rem; border-radius: 0; border-left: none" data-history-target="page" data-action="history#refresh">
+            <select class="form-select" style="width: 5rem; border-radius: 0; border-left: none" data-history-target="page" data-action="history#refresh">
                 <option value="0">1</option>
             </select>
             <li class="page-item disabled" data-history-target="next"><a class="page-link" href="#" data-action="history#paginate" data-history-shift-param="1">Next</a></li>
