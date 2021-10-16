@@ -6,13 +6,28 @@
 {% block content %}
     <h1>Graphs</h1>
     <div data-controller="graphs">
-        <p>
-            <select data-graphs-target="setup" data-action="graphs#refresh">
-                <option value="1;3600">Today</option>
-                <option value="7;86400" selected>Last 7 days</option>
-                <option value="30;86400">Last 30 days</option>
+        <div class="input-group mb-3">
+            <select data-graphs-target="inputStartEnd" data-action="graphs#changePeriod" class="form-control">
+                <option value="L1">Today</option>
+                <option value="tw" selected>This week</option>
+                <option value="L7">Last 7 days</option>
+                <option value="l2">Last 2 weeks</option>
+                <option value="tm">This month</option>
+                <option value="L30">Last 30 days</option>
+                <option value="l4">Last 4 weeks</option>
             </select>
-        </p>
+            <span class="input-group-text">Start</span>
+            <input type="date" class="form-control" data-graphs-target="inputStartDate" data-action="graphs#refresh">
+            <span class="input-group-text">End</span>
+            <input type="date" class="form-control" data-graphs-target="inputEndDate" data-action="graphs#refresh">
+            <span class="input-group-text">Period</span>
+            <select data-graphs-target="inputPeriod" class="form-control" data-action="graphs#refresh">
+                <option value="3600">1 hour</option>
+                <option value="86400" selected>1 day</option>
+                <option value="604800">1 week</option>
+            </select>
+        </div>
+
         <p class="mb-3" data-graphs-target="total"></p>
         <div data-graphs-target="cumulative" class="d-flex flex-row graph-cumulative"></div>
         <div data-graphs-target="perPeriod" style="width: 100%;" class="mt-3">

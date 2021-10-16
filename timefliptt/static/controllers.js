@@ -4,6 +4,9 @@
 const ESC_KEY = 27;
 const ENTER_KEY = 13;
 
+const ONE_HOUR = 60 * 60;
+const ONE_DAY = 24 * ONE_HOUR;
+
 const NAMES = [
     "teddy bears",
     "unicorns",
@@ -330,7 +333,7 @@ export class TFAddController extends Controller {
                     // and display toast
                     showToast("Device successfully added!", "bg-primary");
                 }).catch((err) => { // be more explicit!
-                    if (err.metadata.status === 422) {
+                    if ('metadata' in err && 'metadata' in err && err.metadata.status === 422) {
                         deal_with_tf_info_error_422(err.metadata).then((msg) => showToast(msg));
                     } else {
                         showToast(err.message);
@@ -344,26 +347,73 @@ import { Chart, registerables } from 'https://cdn.jsdelivr.net/npm/chart.js@3.5.
 
 Chart.register(...registerables);
 
+Date.prototype.resetTime =  function () {
+    this.setSeconds(0);
+    this.setMinutes(0);
+    this.setHours(0);
+};
+
 export class GraphsController extends  Controller {
-    static get targets() { return ["setup", "cumulative", "perPeriod", "total"]; }
+    static get targets() { return ["inputStartEnd", "inputStartDate", "inputEndDate", "inputPeriod", "cumulative", "perPeriod", "total"]; }
 
     connect() {
+        this.changePeriod();
+    }
+
+    changePeriod() {
+        let start = new Date();
+        let end = new Date();
+        let v = this.inputStartEndTarget.value;
+        this.inputPeriodTarget.value = ONE_DAY;
+
+        if (v.startsWith('L')) { // last x days
+            console.log(v.slice(1));
+            end = new Date();
+            end.resetTime();
+            end.setDate(end.getDate() + 1);
+            start = new Date(end);
+            start.setDate(end.getDate() - Number(v.slice(1)));
+
+            if (v === 'L1')
+                this.inputPeriodTarget.value = ONE_HOUR;
+
+        } else if (v === 'tw') {
+            start = new Date();
+            start.setDate(start.getDate() - (start.getDay() + 6) % 7); // previous monday
+            start.resetTime();
+            end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7);
+        } else if (v === 'tm') {
+            start = new Date();
+            start.setDate(1);
+            start.resetTime();
+            end = new Date(start);
+            end.setMonth(start.getMonth() + 1);
+            end.setDate(0);
+            this.inputPeriodTarget.value = 24 * 60 * 60;
+        } else if (v.startsWith('l')) { // last x weeks
+            let n = Number(v[1]);
+            end = new Date();
+            end.setDate(start.getDate() - (start.getDay() + 6) % 7 + 7); // next monday
+            end.resetTime();
+            start = new Date(end);
+            start.setDate(start.getDate() - n * 7);
+        } else {
+            showToast(`unknown value ${v}`);
+        }
+
+        this.inputStartDateTarget.valueAsDate = asUTC(start);
+        this.inputEndDateTarget.valueAsDate = asUTC(end);
+
         this.refresh();
     }
 
     refresh() {
-        let v = this.setupTarget.value.split(';');
-        let end = new Date();
-        end.setSeconds(0);
-        end.setMinutes(0);
-        end.setHours(0);
-        end.setDate(end.getDate() + 1);
-        let start = new Date(end);
-        start.setDate(end.getDate() - Number(v[0]));
-        let query = `start_date=${asUTC(start).toISOString().slice(0, 10)}&end_date=${asUTC(end).toISOString().slice(0, 10)}`
-
+        let start = fromUTC(this.inputStartDateTarget.valueAsDate);
+        let end = fromUTC(this.inputEndDateTarget.valueAsDate);
+        let query = `start_date=${asUTC(start).toISOString().slice(0, 10)}&end_date=${asUTC(end).toISOString().slice(0, 10)}`;
+        let period = Number(this.inputPeriodTarget.value);
         this.makeCumulative(query);
-        this.makePerPeriod(query, Number(v[1]));
+        this.makePerPeriod(query, period, ONE_HOUR);
     }
 
     makeCumulative(query) {
@@ -386,17 +436,30 @@ export class GraphsController extends  Controller {
             });
     }
 
-    makePerPeriod(query, period) {
-        let sub_period = 60;
+    makePerPeriod(query, period, subperiod) {
         let get_label = (date) => {
             let d = new Date(date);
-            return `${(d.getHours())}:00`;
+            return `${(d.toLocaleTimeString())}`;
         };
-        if (period == 24 * 60 * 60) {
-            sub_period = 3600;
+
+        if (period >= 24 * 60 * 60 + 1) {
             get_label = (date) => {
                 let d = new Date(date);
-                return `${(d.getDate())}/${d.getMonth() + 1}`;
+                let dp = new Date(date);
+                dp.setSeconds(d.getSeconds() + period - 1);
+                return `${d.toLocaleDateString()} → ${dp.toLocaleDateString()}`;
+            };
+        } else if (period >= 24 * 60 * 60) {
+            get_label = (date) => {
+                let d = new Date(date);
+                return `${d.toLocaleDateString()}`;
+            };
+        } else if (period >= 60 * 60 + 1) {
+            get_label = (date) => {
+                let d = new Date(date);
+                let dp = new Date(date);
+                dp.setSeconds(d.getSeconds() + period - 1);
+                return `${(d.toLocaleTimeString())} → ${dp.toLocaleTimeString()}`;
             };
         }
 
@@ -418,7 +481,7 @@ export class GraphsController extends  Controller {
                             };
                         }
 
-                        datasets[task.id].data[period_id] = task.cumulative_time / sub_period;
+                        datasets[task.id].data[period_id] = task.cumulative_time / subperiod;
                     });
 
                     period_id++;
@@ -441,13 +504,24 @@ export class GraphsController extends  Controller {
                             stacked: true,
                           },
                           y: {
-                            stacked: true
+                            stacked: true,
+                              title: {
+                                display: true,
+                                text: 'Number of hours'
+                              },
+                              ticks: {
+                                stepSize: 2
+                              }
                           }
                         }
                     }
                 });
             }).catch((err) => {
-                showToast(err.message);
+                if ('metadata' in err && err.metadata.status == 403) {
+                    showToast('Not allowed, since this would results in too many data!');
+                } else {
+                    showToast(err.message);
+                }
             });
     }
 }
@@ -746,9 +820,9 @@ export class TimeflipInfoController extends Controller {
                             modal.hide();
                             showToast('Info were updated', 'bg-info');
                         }).catch((error) => {
-                            if (error.metadata.status === 401)  {
+                            if ('metadata' in error && error.metadata.status === 401)  {
                                 showToast('Please connect to TimeFlip first');
-                            } else if (error.metadata.status === 422) {
+                            } else if ('metadata' in error && error.metadata.status === 422) {
                                 deal_with_tf_info_error_422(error.metadata).then((msg) => showModalMessage($modal, msg));
                             } else {
                                 showToast(error.message);
@@ -758,7 +832,7 @@ export class TimeflipInfoController extends Controller {
 
                 modal.show();
             }).catch((error) => {
-                if (error.metadata.status === 401)  {
+                if ('metadata' in error && error.metadata.status === 401)  {
                     showToast('Please connect to TimeFlip first');
                 } else {
                     showToast(error.message);
@@ -784,7 +858,7 @@ export class TimeflipInfoController extends Controller {
                         });
                 });
             }).catch((error) => {
-                if (error.metadata.status === 401)  {
+                if ('metadata' in error && error.metadata.status === 401)  {
                     showToast('Please connect to TimeFlip first');
                 } else {
                     showToast(error.message);
@@ -804,9 +878,9 @@ export class TimeflipInfoController extends Controller {
                     showToast(`Fetched ${data.history_elements.length} history elements!`, "bg-info");
                     modal.hide();
                 }).catch((error) => {
-                    if (error.metadata.status === 401)  {
+                    if ('metadata' in error && error.metadata.status === 401)  {
                         showModalMessage(modal._element, 'Please connect to TimeFlip first');
-                    } else if (error.metadata.status === 409)  {
+                    } else if ('metadata' in error && error.metadata.status === 409)  {
                         error.metadata.json().then(data => showModalMessage(modal._element, data.message));
                     } else {
                         showModalMessage(modal._element, error.message);
@@ -923,7 +997,7 @@ export class HistoryController extends Controller {
                 });
 
             }).catch((error) => {
-                if (error.metadata.status === 404)  {
+                if ('metadata' in error && error.metadata.status === 404)  {
                     showToast('The requested page does not exists');
                 } else {
                     showToast(error.message);
@@ -1098,7 +1172,7 @@ export class HistoryController extends Controller {
                            showModalMessage(modal._element, error.message);
                        });
                 }
-            )
+            );
         }
     }
 }
@@ -1116,9 +1190,7 @@ function fromUTC(date) {
 function fromHTMLDateTime(date, time) {
     let datetime = fromUTC(date.valueAsDate);
     time = fromUTC(time.valueAsDate);
-    datetime.setHours(time.getHours());
-    datetime.setMinutes(time.getMinutes());
-    datetime.setSeconds(time.getSeconds());
+    datetime.resetTime();
     return asUTC(datetime).toISOString().slice(0, -1);
 }
 
