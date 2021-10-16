@@ -1222,7 +1222,9 @@ function fromUTC(date) {
 function fromHTMLDateTime(date, time) {
     let datetime = fromUTC(date.valueAsDate);
     time = fromUTC(time.valueAsDate);
-    datetime.resetTime();
+    datetime.setHours(time.getHours());
+    datetime.setMinutes(time.getMinutes());
+    datetime.setSeconds(time.getSeconds());
     return asUTC(datetime).toISOString().slice(0, -1);
 }
 
