@@ -1,87 +1,25 @@
-from datetime import datetime, date, timedelta
+from datetime import timedelta
 import math
 
-from typing import Tuple, List, ClassVar, Any, Hashable
+from typing import Tuple, ClassVar, Any, Hashable
 
 import flask
 from flask import jsonify, Response
 from flask.views import MethodView
 
 from webargs import fields
-from marshmallow import Schema, validate, validates_schema, ValidationError
+from marshmallow import Schema, validate
 
 from timefliptt.blueprints.api.views import blueprint
 from timefliptt.blueprints.api.schemas import Parser, TaskSchema, CategorySchema, TimeFlipDeviceSchema
-from timefliptt.blueprints.base_models import HistoryElement, Task
+from timefliptt.blueprints.base_models import HistoryElement
+from timefliptt.blueprints.api.views.views_history import HistoryElementMixin
 
 
 parser = Parser()
 
 
-class BaseStatisticalView:
-
-    class FilterStatSchema(Schema):
-        start = fields.DateTime()
-        start_date = fields.Date()
-        end = fields.DateTime()
-        end_date = fields.Date()
-
-        task = fields.List(fields.Integer(validate=validate.Range(min=0)))
-        timeflip = fields.List(fields.Integer(validate=validate.Range(min=0)))
-        category = fields.List(fields.Integer(validate=validate.Range(min=0)))
-
-        @validates_schema
-        def exclusive_date(self, data, **kwargs):
-            if 'start' in data and 'start_date' in data:
-                raise ValidationError('cannot define both start and start_date', 'start')
-
-            if 'end' in data and 'end_date' in data:
-                raise ValidationError('cannot define both end and end_date', 'end')
-
-    @staticmethod
-    def query_elements(**kwargs) -> Tuple[List[HistoryElement], Tuple[datetime, datetime]]:
-        """Get the history elements that fit into the filters.
-        Returns the list of elements that fulfill the filters and the time frame.
-
-        Note: by default, the time frame is "last 7 days" (including this one).
-        """
-        query = HistoryElement.query
-
-        # -- Time frame
-        start = datetime.combine(date.today(), datetime.min.time()) - timedelta(days=6)
-        end = datetime.combine(date.today(), datetime.min.time()) + timedelta(days=1)
-
-        if 'start' in kwargs:
-            start = kwargs.get('start')
-        elif 'start_date' in kwargs:
-            start = datetime.combine(kwargs.get('start_date'), datetime.min.time())
-
-        if 'end' in kwargs:
-            end = kwargs.get('end')
-        elif 'end_date' in kwargs:
-            end = datetime.combine(kwargs.get('end_date'), datetime.min.time())
-
-        if end < start:
-            start, end = end, start
-
-        query = query.filter(HistoryElement.end > start).filter(HistoryElement.start < end)
-
-        # -- Timeflips
-        if 'timeflip' in kwargs:
-            query = query.filter(HistoryElement.timeflip_device_id.in_(kwargs.get('timeflip')))
-
-        # -- Tasks
-        if 'task' in kwargs:
-            query = query.filter(HistoryElement.task_id.in_(kwargs.get('task')))
-
-        # -- Category
-        if 'category' in kwargs:
-            query = query.join(Task).filter(Task.category_id.in_(kwargs.get('category')))
-
-        return query.all(), (start, end)
-
-
-class BaseCumulativeView(BaseStatisticalView, MethodView):
+class BaseCumulativeView(HistoryElementMixin, MethodView):
 
     object_schema: ClassVar[Schema]
     objects_name = 'tasks'
@@ -89,7 +27,7 @@ class BaseCumulativeView(BaseStatisticalView, MethodView):
     def discriminate(self, x: HistoryElement) -> Tuple[Hashable, Any]:
         raise NotImplementedError()
 
-    @parser.use_kwargs(BaseStatisticalView.FilterStatSchema, location='query')
+    @parser.use_kwargs(HistoryElementMixin.FilterHistoryElementSchema, location='query')
     def get(self, **kwargs) -> Response:
         """Get cumulative time for each task in a given time frame
         """
@@ -98,7 +36,7 @@ class BaseCumulativeView(BaseStatisticalView, MethodView):
         schemas = {}
         cumulative_time = 0
 
-        for element in elements:
+        for element in elements.all():
             try:
                 discriminant, obj = self.discriminate(element)
             except ValueError:
@@ -177,7 +115,7 @@ blueprint.add_url_rule(
 )
 
 
-class BasePeriodicView(BaseStatisticalView, MethodView):
+class BasePeriodicView(HistoryElementMixin, MethodView):
 
     object_schema: ClassVar[Schema]
     objects_name: str
@@ -191,7 +129,7 @@ class BasePeriodicView(BaseStatisticalView, MethodView):
         period = fields.Integer(validate=validate.Range(min=0), required=True)
 
     @parser.use_kwargs(PeriodicSchema, location='view_args')
-    @parser.use_kwargs(BaseStatisticalView.FilterStatSchema, location='query')
+    @parser.use_kwargs(HistoryElementMixin.FilterHistoryElementSchema, location='query')
     def get(self, period: int, **kwargs) -> Response:
         """Get cumulative time for each task in a given period
         """
@@ -222,7 +160,7 @@ class BasePeriodicView(BaseStatisticalView, MethodView):
             accumulator.append({})
 
         cumulative_time = 0
-        for element in elements:
+        for element in elements.all():
             try:
                 discriminant, obj = self.discriminate(element)
             except ValueError:
