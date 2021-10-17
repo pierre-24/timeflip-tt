@@ -86,7 +86,7 @@
           </div>
         </div>
 
-        <p class="btn-group btn-group">
+        <p class="btn-group btn-group mb-3">
             <select data-history-target="size" data-action="history#repaginate">
                 <option value="10">10 per page</option>
                 <option value="25">25 per page</option>
@@ -97,6 +97,13 @@
             <button class="btn btn-outline-primary" data-action="history#modifyCommentChecked"><i class="bi bi-chat-text"></i> Comment</button>
             <button class="btn btn-outline-primary" data-action="history#destroyChecked"><i class="bi bi-x"></i> Delete</button>
         </p>
+
+
+        <div class="input-group input-group-sm mb-3">
+            <select multiple data-history-target="inputCategories" class="form-select" data-action="history#repaginate"></select>
+            <select multiple data-history-target="inputTasks" class="form-select" data-action="history#repaginate"></select>
+        </div>
+
         <table class="table">
             <thead>
                 <tr>

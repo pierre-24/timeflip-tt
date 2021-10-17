@@ -1002,14 +1002,40 @@ export class FacetToTaskController extends Controller {
 }
 
 export class HistoryController extends Controller {
-    static get targets() { return ["tbody", "previous", "next", "size", "page", "inputBulkTask", "inputBulkComment"]; }
+    static get targets() { return [
+        "tbody",
+        "previous", "next", "size", "page",
+        "inputCategories", "inputTasks",
+        "inputBulkTask", "inputBulkComment"
+    ]; }
 
     connect() {
         this.refresh();
+        apiCall('categories/').then((data) => {
+                data.categories.forEach((category)=> {
+                    let $optcat = document.createElement("option");
+                    $optcat.value = category.id;
+                    $optcat.innerText = category.name;
+                    this.inputCategoriesTarget.append($optcat);
+
+                    category.tasks.forEach((task) => {
+                        let $opttask = document.createElement("option");
+                        $opttask.value = task.id;
+                        $opttask.innerText = `${category.name} > ${task.name}`;
+                        this.inputTasksTarget.append($opttask);
+                    });
+                });
+            }).catch((err) => {
+                showToast(err.message);
+            });
     }
 
-    showPage(page, page_size) {
-        apiCall(`history/?page=${page}&page_size=${page_size}`)
+    showPage(page, page_size, extra_query='') {
+        let query = `history/?page=${page}&page_size=${page_size}`;
+        if (extra_query)
+            query += extra_query;
+
+        apiCall(query)
             .then((data) => {
                 // paginate
                 if (page > 0)
@@ -1094,7 +1120,17 @@ export class HistoryController extends Controller {
     }
 
     refresh() {
-        this.showPage(Number(this.pageTarget.value), this.sizeTarget.value);
+        let selected_cats = new Array(...this.inputCategoriesTarget.selectedOptions).map(opt => Number(opt.value));
+        let selected_tasks = new Array(...this.inputTasksTarget.selectedOptions).map(opt => Number(opt.value));
+
+        let extra_query = '';
+        if (selected_cats.length > 0)
+            extra_query += '&category=' + selected_cats.join('&category=');
+
+        if (selected_tasks.length > 0)
+            extra_query += '&task=' + selected_tasks.join('&task=');
+
+        this.showPage(Number(this.pageTarget.value), Number(this.sizeTarget.value), extra_query);
     }
 
     toogleAll(event) {
